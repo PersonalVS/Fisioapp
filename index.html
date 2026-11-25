@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#0a0a08"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="Fisioapp"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" href="icon-192.png"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<title>Fisioapp</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+:root{--bg:#0a0a08;--sf:#12120e;--card:#1a1912;--card2:#24221a;--bd:#3a3622;--ac:#d4a72c;--act:#0a0a08;--acd:rgba(212,167,44,.13);--tx:#f5f0dc;--tx2:#b5ad8c;--tx3:#7d765c;--red:#ff6b6b;--org:#f2cf4a;--blue:#4fbf6a;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:light){:root{--bg:#f8f4e4;--sf:#fff;--card:#fff;--card2:#f0ead2;--bd:#ddd3a8;--ac:#8a6a0a;--act:#fff;--acd:rgba(138,106,10,.10);--tx:#1a1708;--tx2:#5c5430;--tx3:#93896a;--red:#c62f3f;--org:#a67c00;--blue:#1f7a3a}}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--tx);position:fixed;width:100%}
+#app{height:100dvh;display:flex;flex-direction:column}
+#top{background:var(--sf);border-bottom:1px solid var(--bd);padding:calc(var(--st) + 14px) 14px 12px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#title{font-family:'Syne',sans-serif;font-weight:800;font-size:17px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#title span{color:var(--ac)}
+.bk{width:34px;height:34px;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx2);font-size:20px;cursor:pointer;display:none}
+#main{flex:1;min-height:0;overflow-y:auto;padding:16px 14px 28px;-webkit-overflow-scrolling:touch}
+#nav{background:var(--sf);border-top:1px solid var(--bd);display:flex;padding:7px 0 calc(var(--sb) + 7px);flex-shrink:0}
+.ni{flex:1;text-align:center;font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--tx3);cursor:pointer;padding:3px}
+.ni i{display:block;font-style:normal;font-size:20px;margin-bottom:1px}
+.ni.on{color:var(--ac)}
+h2{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:4px}
+h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;margin-bottom:14px}
+.sub{font-size:13px;color:var(--tx2);margin-bottom:14px}
+.muted{font-size:12px;color:var(--tx3);line-height:1.5}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.ct{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--ac);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px 10px}
+.sv{font-family:'Syne',sans-serif;font-weight:800;font-size:20px}.sl{font-size:10.5px;color:var(--tx2);margin-top:2px}
+.pc{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:9px;cursor:pointer}
+.pc:active{border-color:var(--ac)}
+.av{width:42px;height:42px;border-radius:12px;background:var(--acd);color:var(--ac);display:flex;align-items:center;justify-content:center;font-weight:800;font-family:'Syne',sans-serif;flex-shrink:0}
+.pn{font-weight:700;font-size:14px}.pm{font-size:11.5px;color:var(--tx2);margin-top:2px}
+.chip{display:inline-flex;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border:1px solid var(--bd);color:var(--tx2);white-space:nowrap}
+.chip.ok{color:var(--ac);border-color:var(--ac);background:var(--acd)}.chip.red{color:var(--red);border-color:var(--red)}.chip.blue{color:var(--blue);border-color:var(--blue)}.chip.org{color:var(--org);border-color:var(--org)}
+.btn{padding:11px 16px;border-radius:11px;font-weight:700;font-size:13.5px;cursor:pointer;border:none;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.97)}
+.bp{background:var(--ac);color:var(--act)}.bg{background:var(--card2);color:var(--tx2);border:1px solid var(--bd)}.bo{background:transparent;color:var(--ac);border:1px solid var(--ac)}.bd2{background:transparent;color:var(--red);border:1px solid var(--red)}
+.bf{width:100%}.bs{padding:6px 11px;font-size:12px;border-radius:8px}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.btns .btn{flex:1}
+.fg{margin-bottom:11px;flex:1;min-width:0}
+label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--tx2);margin-bottom:5px}
+input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;color:var(--tx);font-size:15px;font-family:inherit;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--ac)}
+textarea{resize:vertical;line-height:1.5}
+input[type=range]{padding:0;height:34px;accent-color:var(--ac)}
+input[type=checkbox]{width:auto}
+.row{display:flex;gap:10px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:8px 14px;border-radius:10px;border:1px solid var(--bd);background:var(--sf);color:var(--tx3);font-weight:700;font-size:12.5px;cursor:pointer}
+.tab.on{background:var(--acd);color:var(--ac);border-color:var(--ac)}
+.fl{display:flex;gap:7px;margin-bottom:12px;overflow-x:auto}
+.ln{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}.ln:last-child{border:none}
+.ln b{text-align:right}.ln span{color:var(--tx2)}
+.soap{display:flex;gap:9px;margin-top:7px;font-size:13px;line-height:1.5}
+.soap b{width:22px;height:22px;border-radius:6px;background:var(--acd);color:var(--ac);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;margin-top:1px}
+.soap span{white-space:pre-wrap;color:var(--tx)}
+.rowc{background:var(--card2);border:1px solid var(--bd);border-radius:11px;padding:10px;margin-bottom:8px}
+.rowc .row{margin-bottom:7px}.rowc .row:last-child{margin:0}
+.rowc input,.rowc select{font-size:13.5px;padding:8px 10px}
+.x{background:none;border:none;color:var(--red);font-size:16px;cursor:pointer;padding:4px 8px}
+.eva{font-family:'Syne',sans-serif;font-size:34px;font-weight:800;line-height:1}
+.bar{height:7px;border-radius:5px;background:var(--bd);overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--ac)}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:50;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)}
+#ov.on{display:flex}
+#md{background:var(--sf);border:1px solid var(--bd);border-radius:22px 22px 0 0;padding:20px 16px calc(var(--sb) + 20px);width:100%;max-width:640px;max-height:92vh;overflow-y:auto}
+#toast{position:fixed;left:50%;bottom:calc(var(--sb) + 80px);transform:translateX(-50%);background:var(--card2);border:1px solid var(--bd);padding:9px 16px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;white-space:nowrap}
+#toast.on{opacity:1}
+.empty{text-align:center;padding:40px 10px;color:var(--tx3)}.empty div{font-size:42px;margin-bottom:8px}
+@media(min-width:700px){#main{padding:20px calc(50% - 320px)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top"><button class="bk" id="bk" onclick="back()">‹</button><div id="title"></div></div>
+  <div id="main"></div>
+  <div id="nav">
+    <div class="ni" data-v="home" onclick="go('home')"><i>🧑‍⚕️</i>Pacientes</div>
+    <div class="ni" data-v="agenda" onclick="go('agenda')"><i>📅</i>Agenda</div>
+    <div class="ni" data-v="fin" onclick="go('fin')"><i>💰</i>Financeiro</div>
+    <div class="ni" data-v="cfg" onclick="go('cfg')"><i>⚙️</i>Ajustes</div>
+  </div>
+</div>
+<div id="ov" onclick="if(event.target===this)closeModal()"><div id="md"></div></div>
+<div id="toast"></div>
+<datalist id="dl-adm"></datalist>
+<datalist id="dl-forca"></datalist>
+<datalist id="dl-testes"></datalist>
+<input type="file" id="bkfile" accept=".json" style="display:none" onchange="importar(event)"/>
+
+<script>
+// ═══════════ DADOS (ficam só neste aparelho; faça backup em Ajustes) ═══════════
+const KEY='pfisio_db_v1';
+let db=load();
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.patients)return d}catch(e){}return{patients:[],settings:{nome:'',crefito:'',clinica:'',tel:''}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('⚠️ Não foi possível salvar (armazenamento cheio?)')}}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id);
+const v=id=>($(id)?.value||'').trim();
+const brl=n=>'R$ '+(+n||0).toFixed(2).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const iso=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const fmtD=s=>s?s.split('-').reverse().join('/'):'';
+const first=n=>(n||'').split(' ')[0];
+const pat=id=>db.patients.find(p=>p.id===id);
+const real=p=>p.sessoes.filter(s=>s.status==='realizada');
+const usadas=(p,k,ex)=>p.sessoes.filter(s=>s.status==='realizada'&&s.pacoteId===k.id&&s.id!==ex).length;
+const pacoteAtivo=p=>p.pacotes.find(k=>usadas(p,k)<k.total);
+const devedor=p=>p.sessoes.filter(s=>s.status==='realizada'&&!s.pago&&s.valor>0).reduce((n,s)=>n+s.valor,0)+p.pacotes.filter(k=>!k.pago).reduce((n,k)=>n+k.valor,0);
+function idade(n){if(!n)return'';const d=new Date(n+'T00:00'),a=new Date();let i=a.getFullYear()-d.getFullYear();if(a<new Date(a.getFullYear(),d.getMonth(),d.getDate()))i--;return i+' anos'}
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),2200)}
+function openModal(h){$('md').innerHTML=h;$('ov').classList.add('on')}
+function closeModal(){$('ov').classList.remove('on')}
+function wa(tel,msg){let n=(tel||'').replace(/\D/g,'');if(n&&n.length<=11)n='55'+n;window.open('https://wa.me/'+n+'?text='+encodeURIComponent(msg),'_blank')}
+const field=(id,l,val='',type='text',ex='')=>`<div class="fg"><label>${l}</label><input id="${id}" type="${type}" value="${esc(val)}" ${ex}></div>`;
+const area=(id,l,val='',rows=3,ph='')=>`<div class="fg"><label>${l}</label><textarea id="${id}" rows="${rows}" placeholder="${esc(ph)}">${esc(val)}</textarea></div>`;
+const opts=(arr,cur)=>arr.map(o=>{const[val,lb]=Array.isArray(o)?o:[o,o];return`<option value="${esc(val)}" ${cur===val?'selected':''}>${esc(lb)}</option>`}).join('');
+
+// listas de apoio (sugestões ao digitar)
+const ADM_P=[['Ombro — flexão','180'],['Ombro — extensão','60'],['Ombro — abdução','180'],['Ombro — rotação externa','90'],['Ombro — rotação interna','70'],['Cotovelo — flexão','150'],['Punho — flexão','80'],['Punho — extensão','70'],['Quadril — flexão','120'],['Quadril — extensão','30'],['Quadril — abdução','45'],['Quadril — rotação interna','45'],['Quadril — rotação externa','45'],['Joelho — flexão','135'],['Joelho — extensão','0'],['Tornozelo — dorsiflexão','20'],['Tornozelo — flexão plantar','50'],['Coluna cervical — flexão','45'],['Coluna cervical — extensão','45'],['Coluna cervical — rotação','80'],['Coluna lombar — flexão','60'],['Coluna lombar — extensão','25']];
+const FORCA_P=['Deltoide','Manguito rotador','Bíceps braquial','Tríceps braquial','Flexores de punho','Iliopsoas','Glúteo médio','Glúteo máximo','Quadríceps','Isquiotibiais','Tibial anterior','Tríceps sural','Abdominais','Extensores de coluna'];
+const TESTES_P=['Lachman','Gaveta anterior','Gaveta posterior','McMurray','Stress em valgo','Stress em varo','Neer','Hawkins-Kennedy','Jobe (lata vazia)','Patte','Speed','Phalen','Tinel','Lasègue','Slump','Patrick (FABER)','Thomas','Ober','Trendelenburg','Adams','Spurling','Apley'];
+const GRAU=[['0','0 — sem contração'],['1','1 — contração palpável'],['2','2 — move sem gravidade'],['3','3 — vence a gravidade'],['4','4 — vence resistência parcial'],['5','5 — força normal']];
+$('dl-adm').innerHTML=ADM_P.map(a=>`<option value="${a[0]}">`).join('');
+$('dl-forca').innerHTML=FORCA_P.map(a=>`<option value="${a}">`).join('');
+$('dl-testes').innerHTML=TESTES_P.map(a=>`<option value="${a}">`).join('');
+
+// ═══════════ NAVEGAÇÃO ═══════════
+const S={view:'home',pid:null,tab:'resumo',q:'',f:'todos',aid:null};
+let D=null; // rascunho da avaliação em edição
+function go(view,o={}){Object.assign(S,{view},o);render();$('main').scrollTop=0}
+function back(){if(S.view==='aval'){D=null;go('pac',{tab:'aval'})}else go('home')}
+function render(){
+  const m=$('main'),st=m.scrollTop;
+  const views={home:viewHome,agenda:viewAgenda,fin:viewFin,cfg:viewCfg,pac:viewPac,aval:viewAval};
+  m.innerHTML=views[S.view]();
+  m.scrollTop=st;
+  const base=(S.view==='pac'||S.view==='aval')?'home':S.view;
+  document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on',n.dataset.v===base));
+  const sub=S.view==='pac'||S.view==='aval';
+  $('bk').style.display=sub?'block':'none';
+  const t={home:'Fisio<span>app</span>',agenda:'Agenda',fin:'Financeiro',cfg:'Ajustes',pac:esc(pat(S.pid)?.nome||''),aval:S.aid?'Editar avaliação':'Nova avaliação'};
+  $('title').innerHTML=t[S.view];
+}
+
+// ═══════════ PACIENTES ═══════════
+function listHtml(){
+  const q=S.q.toLowerCase();
+  let l=db.patients.filter(p=>p.nome.toLowerCase().includes(q));
+  if(S.f==='ativo')l=l.filter(p=>p.status!=='alta');else if(S.f==='alta')l=l.filter(p=>p.status==='alta');
+  l.sort((a,b)=>a.nome.localeCompare(b.nome,'pt'));
+  if(!l.length)return db.patients.length?`<div class="empty"><div>🔍</div>Nenhum paciente encontrado.</div>`:`<div class="empty"><div>👋</div><b>Bem-vinda ao Fisioapp!</b><p style="margin:8px 0 16px;font-size:13px">Cadastre o primeiro paciente para começar a registrar avaliações e evoluções.</p><button class="btn bp" onclick="pacModal()">➕ Cadastrar paciente</button></div>`;
+  return l.map(p=>{const d=devedor(p),n=real(p).length;
+    return`<div class="pc" onclick="go('pac',{pid:'${p.id}',tab:'resumo'})"><div class="av">${esc(p.nome.trim()[0]?.toUpperCase()||'?')}</div>
+    <div style="flex:1;min-width:0"><div class="pn">${esc(p.nome)}</div><div class="pm">${[idade(p.nasc),p.plano.dx||p.dxMedico].filter(Boolean).map(esc).join(' · ')||'—'}</div>
+    <div class="pm">${n} sessão(ões)${d>0?` · <span style="color:var(--red)">${brl(d)} em aberto</span>`:''}</div></div>
+    <span class="chip ${p.status==='alta'?'':'ok'}">${p.status==='alta'?'Alta':'Em tratamento'}</span></div>`}).join('');
+}
+function viewHome(){
+  const t=iso();
+  const ativos=db.patients.filter(p=>p.status!=='alta').length;
+  const hoje=db.patients.reduce((n,p)=>n+p.sessoes.filter(s=>s.data===t&&s.status==='agendada').length,0);
+  const dev=db.patients.reduce((n,p)=>n+devedor(p),0);
+  return`<div class="stats"><div class="stat"><div class="sv" style="color:var(--ac)">${ativos}</div><div class="sl">Em tratamento</div></div>
+  <div class="stat"><div class="sv" style="color:var(--blue)">${hoje}</div><div class="sl">Sessões hoje</div></div>
+  <div class="stat"><div class="sv" style="color:var(--red);font-size:15px;padding-top:4px">${brl(dev)}</div><div class="sl">A receber</div></div></div>
+  <input placeholder="🔍 Buscar paciente..." value="${esc(S.q)}" oninput="S.q=this.value;$('plist').innerHTML=listHtml()" style="margin-bottom:10px"/>
+  <div class="fl">${[['todos','Todos'],['ativo','Em tratamento'],['alta','Alta']].map(([k,l])=>`<span class="tab ${S.f===k?'on':''}" onclick="S.f='${k}';render()">${l}</span>`).join('')}</div>
+  <button class="btn bp bf" style="margin-bottom:12px" onclick="pacModal()">➕ Novo paciente</button>
+  <div id="plist">${listHtml()}</div>`;
+}
+function pacModal(pid){
+  const p=pid?pat(pid):{};
+  openModal(`<h3>${pid?'Editar cadastro':'Novo paciente'}</h3>
+  ${field('c_nome','Nome completo *',p.nome)}
+  <div class="row">${field('c_nasc','Nascimento',p.nasc,'date')}<div class="fg"><label>Sexo</label><select id="c_sexo">${opts(['','Feminino','Masculino','Outro'],p.sexo||'')}</select></div></div>
+  <div class="row">${field('c_tel','WhatsApp / telefone',p.tel,'tel','inputmode="tel"')}${field('c_prof','Profissão',p.prof)}</div>
+  ${field('c_dxm','Diagnóstico médico / CID',p.dxMedico)}
+  ${field('c_med','Médico encaminhador',p.medico)}
+  ${area('c_queixa','Queixa principal',p.queixa,2)}
+  ${area('c_hda','História da doença atual (HDA)',p.hda,3,'Início, mecanismo de lesão, evolução, tratamentos anteriores...')}
+  ${area('c_ant','Antecedentes / comorbidades / cirurgias',p.ant,2)}
+  ${area('c_meds','Medicamentos em uso',p.meds,2)}
+  ${area('c_alerta','⚠️ Alertas / contraindicações',p.alerta,2,'Ex: marcapasso, gestante, alergia a ...')}
+  <div class="card" style="background:var(--card2);margin-bottom:11px"><div class="ct">💰 Cobrança</div>
+  <div class="fg"><label>Modalidade</label><select id="c_tipo">${opts([['sessao','Por sessão'],['pacote','Pacote de sessões']],p.tipoCobranca||'sessao')}</select></div>
+  <div class="row">${field('c_vs','Valor da sessão (R$)',p.valorSessao||'','number','step="0.01" inputmode="decimal"')}${field('c_pq','Sessões do pacote padrão',p.pacoteQtd||'','number','inputmode="numeric"')}</div>
+  ${field('c_pv','Valor do pacote padrão (R$)',p.pacoteValor||'','number','step="0.01" inputmode="decimal"')}</div>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;margin-bottom:6px"><input type="checkbox" id="c_lgpd" ${p.consentimento?'checked':''}> Termo de consentimento (LGPD) assinado</label>
+  <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="salvarPac('${pid||''}')">Salvar</button></div>`);
+}
+function salvarPac(pid){
+  const nome=v('c_nome');if(!nome)return toast('⚠️ Informe o nome');
+  const d={nome,nasc:v('c_nasc'),sexo:v('c_sexo'),tel:v('c_tel'),prof:v('c_prof'),dxMedico:v('c_dxm'),medico:v('c_med'),queixa:v('c_queixa'),hda:v('c_hda'),ant:v('c_ant'),meds:v('c_meds'),alerta:v('c_alerta'),tipoCobranca:v('c_tipo'),valorSessao:+v('c_vs')||0,pacoteQtd:+v('c_pq')||0,pacoteValor:+v('c_pv')||0,consentimento:$('c_lgpd').checked};
+  if(pid){Object.assign(pat(pid),d);save();closeModal();render();toast('✅ Cadastro atualizado')}
+  else{const p={id:uid(),status:'ativo',criado:iso(),avaliacoes:[],sessoes:[],pacotes:[],plano:{metas:[],alta:null},...d};db.patients.push(p);save();closeModal();toast('✅ Paciente cadastrado');go('pac',{pid:p.id,tab:'aval'})}
+}
+function excluirPac(pid){const p=pat(pid);if(!confirm(`Excluir "${p.nome}" e todo o prontuário? Esta ação não pode ser desfeita.`))return;db.patients=db.patients.filter(x=>x.id!==pid);save();toast('🗑 Paciente excluído');go('home')}
+
+function viewPac(){
+  const p=pat(S.pid);if(!p){S.view='home';return viewHome()}
+  const tabs=[['resumo','Resumo'],['aval','Avaliação'],['evol','Evolução'],['plano','Plano / Alta'],['fin','Financeiro']];
+  const body={resumo:tabResumo,aval:tabAval,evol:tabEvol,plano:tabPlano,fin:tabFin}[S.tab](p);
+  return`<div class="tabs">${tabs.map(([k,l])=>`<span class="tab ${S.tab===k?'on':''}" onclick="S.tab='${k}';render()">${l}</span>`).join('')}</div>${body}`;
+}
+function tabResumo(p){
+  const ev=evaPts(p),n=real(p).length,prox=p.sessoes.filter(s=>s.status==='agendada'&&s.data>=iso()).sort((a,b)=>(a.data+a.hora)<(b.data+b.hora)?-1:1)[0];
+  const ln=(l,val)=>val?`<div class="ln"><span>${l}</span><b>${esc(val)}</b></div>`:'';
+  return`<div class="card"><div class="ct">Dados <button class="btn bg bs" onclick="pacModal('${p.id}')">✏️ Editar</button></div>
+  ${ln('Idade',idade(p.nasc))}${ln('Sexo',p.sexo)}${ln('Profissão',p.prof)}${ln('Telefone',p.tel)}${ln('Diagnóstico médico',p.dxMedico)}${ln('Encaminhador',p.medico)}
+  ${ln('Consentimento LGPD',p.consentimento?'Assinado':'Pendente')}</div>
+  ${p.alerta?`<div class="card" style="border-color:var(--red)"><div class="ct" style="color:var(--red)">⚠️ Alertas / contraindicações</div><div style="font-size:13.5px;white-space:pre-wrap">${esc(p.alerta)}</div></div>`:''}
+  <div class="stats"><div class="stat"><div class="sv">${n}</div><div class="sl">Sessões feitas</div></div>
+  <div class="stat"><div class="sv" style="color:var(--org)">${ev.length?ev[0].v:'—'}→${ev.length>1?ev[ev.length-1].v:'—'}</div><div class="sl">EVA inicial→atual</div></div>
+  <div class="stat"><div class="sv" style="font-size:14px;padding-top:5px">${prox?fmtD(prox.data)+' '+(prox.hora||''):'—'}</div><div class="sl">Próxima sessão</div></div></div>
+  ${[['Queixa principal',p.queixa],['História da doença atual',p.hda],['Antecedentes / comorbidades',p.ant],['Medicamentos',p.meds]].filter(x=>x[1]).map(([l,t])=>`<div class="card"><div class="ct">${l}</div><div style="font-size:13.5px;white-space:pre-wrap;line-height:1.55">${esc(t)}</div></div>`).join('')}
+  <div class="btns"><button class="btn bp" onclick="openSessao('${p.id}',null,true)">📅 Agendar</button><button class="btn bo" onclick="wa('${esc(p.tel)}','Olá, ${esc(first(p.nome))}! Tudo bem? 😊')">💬 WhatsApp</button></div>
+  <div class="btns"><button class="btn bg" onclick="imprimir('${p.id}')">📄 Prontuário (PDF)</button><button class="btn bd2" onclick="excluirPac('${p.id}')">🗑 Excluir</button></div>`;
+}
+
+// ═══════════ AVALIAÇÃO (EVA, ADM, força, testes) ═══════════
+const evaCor=n=>n>=7?'var(--red)':n>=4?'var(--org)':'var(--ac)';
+function evaPts(p){const pts=[];p.avaliacoes.forEach(a=>{if(a.eva!=null&&a.eva!=='')pts.push({d:a.data,v:+a.eva})});real(p).forEach(s=>{if(s.eva!=null)pts.push({d:s.data,v:+s.eva})});return pts.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0)}
+function chart(p){
+  const pts=evaPts(p);if(pts.length<2)return`<div class="muted">O gráfico de dor aparece quando houver 2 ou mais registros de EVA (avaliações ou sessões).</div>`;
+  const W=320,H=140,pl=24,pr=10,pt=10,pb=22,x=i=>pl+i*(W-pl-pr)/(pts.length-1),y=n=>pt+(10-n)*(H-pt-pb)/10;
+  const dm=s=>s.slice(8)+'/'+s.slice(5,7);
+  return`<svg viewBox="0 0 ${W} ${H}" style="width:100%">${[0,5,10].map(g=>`<line x1="${pl}" x2="${W-pr}" y1="${y(g)}" y2="${y(g)}" stroke="var(--bd)" stroke-width="1"/><text x="2" y="${y(g)+3}" font-size="9" fill="var(--tx3)">${g}</text>`).join('')}
+  <polyline fill="none" stroke="var(--ac)" stroke-width="2.2" stroke-linejoin="round" points="${pts.map((q,i)=>x(i)+','+y(q.v)).join(' ')}"/>
+  ${pts.map((q,i)=>`<circle cx="${x(i)}" cy="${y(q.v)}" r="3.5" fill="var(--ac)"/>${pts.length<=10?`<text x="${x(i)}" y="${y(q.v)-7}" text-anchor="middle" font-size="9" fill="var(--tx2)">${q.v}</text>`:''}`).join('')}
+  <text x="${pl}" y="${H-5}" font-size="9" fill="var(--tx3)">${dm(pts[0].d)}</text><text x="${W-pr}" y="${H-5}" text-anchor="end" font-size="9" fill="var(--tx3)">${dm(pts[pts.length-1].d)}</text></svg>`;
+}
+function tabAval(p){
+  const l=[...p.avaliacoes].sort((a,b)=>a.data<b.data?1:-1);
+  let cmp='';
+  if(p.avaliacoes.length>=2){
+    const s=[...p.avaliacoes].sort((a,b)=>a.data<b.data?-1:1),f=s[0],u=s[s.length-1];
+    const rows=u.adm.map(r=>{const o=f.adm.find(x=>x.mov===r.mov&&x.lado===r.lado);return o?`<div class="ln"><span>${esc(r.mov)} (${esc(r.lado)})</span><b>${esc(o.ativa||'—')}° → ${esc(r.ativa||'—')}°</b></div>`:''}).join('');
+    cmp=`<div class="card"><div class="ct">📊 Comparativo ${fmtD(f.data)} → ${fmtD(u.data)}</div>
+    <div class="ln"><span>EVA</span><b>${f.eva??'—'} → ${u.eva??'—'}</b></div>${rows||'<div class="muted">Registre os mesmos movimentos de ADM nas duas avaliações para comparar.</div>'}</div>`;
+  }
+  return`<div class="card"><div class="ct">Dor ao longo do tratamento (EVA)</div>${chart(p)}</div>${cmp}
+  <button class="btn bp bf" style="margin-bottom:12px" onclick="novaAval('${p.id}')">➕ ${p.avaliacoes.length?'Nova reavaliação':'Avaliação inicial'}</button>
+  ${l.length?l.map(a=>`<div class="card" onclick="editAval('${p.id}','${a.id}')" style="cursor:pointer"><div class="ct">${esc(a.tipo)} · ${fmtD(a.data)} <span class="eva" style="font-size:20px;color:${evaCor(a.eva)}">${a.eva??'—'}<small style="font-size:11px;color:var(--tx3)">/10</small></span></div>
+  <div class="muted">${a.adm.length} ADM · ${a.forca.length} força · ${a.testes.length} teste(s)${a.evaLocal?' · dor: '+esc(a.evaLocal):''}</div></div>`).join(''):`<div class="empty"><div>📋</div>Nenhuma avaliação registrada.</div>`}`;
+}
+function novaAval(pid){const p=pat(pid);D={id:uid(),data:iso(),tipo:p.avaliacoes.length?'Reavaliação':'Inicial',eva:0,evaLocal:'',inspecao:'',palpacao:'',adm:[],forca:[],testes:[],funcional:'',obs:''};S.aid=null;go('aval',{pid})}
+function editAval(pid,aid){D=JSON.parse(JSON.stringify(pat(pid).avaliacoes.find(a=>a.id===aid)));S.aid=aid;go('aval',{pid})}
+const sr=(k,i,f,val)=>{D[k][i][f]=val};
+function rmRow(k,i){D[k].splice(i,1);render()}
+function addAdm(i){if(i==='')return;D.adm.push({mov:ADM_P[i][0],lado:'D',ativa:'',passiva:'',ref:ADM_P[i][1],dor:false});render()}
+function viewAval(){
+  const a=D;if(!a){S.view='pac';return viewPac()}
+  const lado=['D','E','Bilateral'];
+  return`<div class="card"><div class="row"><div class="fg"><label>Data</label><input type="date" value="${a.data}" oninput="D.data=this.value"></div>
+  <div class="fg"><label>Tipo</label><select onchange="D.tipo=this.value">${opts(['Inicial','Reavaliação','Final'],a.tipo)}</select></div></div></div>
+  <div class="card"><div class="ct">Dor — Escala Visual Analógica (EVA)</div>
+  <div style="display:flex;align-items:center;gap:14px"><div class="eva" id="evaV" style="color:${evaCor(a.eva)};min-width:44px">${a.eva}</div>
+  <input type="range" min="0" max="10" step="1" value="${a.eva}" oninput="D.eva=+this.value;$('evaV').textContent=this.value;$('evaV').style.color=evaCor(+this.value)"></div>
+  <div class="muted" style="display:flex;justify-content:space-between;margin:2px 0 10px"><span>0 sem dor</span><span>10 pior dor</span></div>
+  <div class="fg"><label>Local / característica da dor</label><input value="${esc(a.evaLocal)}" placeholder="Ex: joelho D, medial, piora ao descer escada" oninput="D.evaLocal=this.value"></div></div>
+  <div class="card"><div class="ct">Inspeção e palpação</div>
+  <div class="fg"><label>Inspeção / postura</label><textarea rows="2" oninput="D.inspecao=this.value">${esc(a.inspecao)}</textarea></div>
+  <div class="fg"><label>Palpação</label><textarea rows="2" oninput="D.palpacao=this.value">${esc(a.palpacao)}</textarea></div></div>
+  <div class="card"><div class="ct">Amplitude de movimento (ADM)</div>
+  ${a.adm.map((r,i)=>`<div class="rowc"><div class="row"><input list="dl-adm" value="${esc(r.mov)}" placeholder="Articulação — movimento" oninput="sr('adm',${i},'mov',this.value)"><button class="x" onclick="rmRow('adm',${i})">✕</button></div>
+  <div class="row"><select style="flex:0 0 96px" onchange="sr('adm',${i},'lado',this.value)">${opts(lado,r.lado)}</select><input type="number" inputmode="decimal" value="${esc(r.ativa)}" placeholder="Ativa °" oninput="sr('adm',${i},'ativa',this.value)"><input type="number" inputmode="decimal" value="${esc(r.passiva)}" placeholder="Passiva °" oninput="sr('adm',${i},'passiva',this.value)"></div>
+  <div class="row" style="align-items:center"><input value="${esc(r.ref)}" placeholder="Ref. normal °" style="max-width:120px" oninput="sr('adm',${i},'ref',this.value)"><label style="display:flex;gap:6px;align-items:center;margin:0;text-transform:none;letter-spacing:0;font-size:12.5px"><input type="checkbox" ${r.dor?'checked':''} onchange="sr('adm',${i},'dor',this.checked)"> dor ao movimento</label></div></div>`).join('')}
+  <select onchange="addAdm(this.value);this.value=''"><option value="">＋ Adicionar movimento…</option>${ADM_P.map((x,i)=>`<option value="${i}">${x[0]}</option>`).join('')}</select>
+  <button class="btn bg bs" style="margin-top:8px" onclick="D.adm.push({mov:'',lado:'D',ativa:'',passiva:'',ref:'',dor:false});render()">＋ Movimento personalizado</button></div>
+  <div class="card"><div class="ct">Força muscular (Oxford / MRC 0–5)</div>
+  ${a.forca.map((r,i)=>`<div class="rowc"><div class="row"><input list="dl-forca" value="${esc(r.musculo)}" placeholder="Grupo muscular" oninput="sr('forca',${i},'musculo',this.value)"><button class="x" onclick="rmRow('forca',${i})">✕</button></div>
+  <div class="row"><select style="flex:0 0 96px" onchange="sr('forca',${i},'lado',this.value)">${opts(lado,r.lado)}</select><select onchange="sr('forca',${i},'grau',this.value)">${opts(GRAU,String(r.grau))}</select></div></div>`).join('')}
+  <button class="btn bg bs" onclick="D.forca.push({musculo:'',lado:'D',grau:'5'});render()">＋ Grupo muscular</button></div>
+  <div class="card"><div class="ct">Testes especiais</div>
+  ${a.testes.map((r,i)=>`<div class="rowc"><div class="row"><input list="dl-testes" value="${esc(r.nome)}" placeholder="Nome do teste" oninput="sr('testes',${i},'nome',this.value)"><button class="x" onclick="rmRow('testes',${i})">✕</button></div>
+  <div class="row"><select style="flex:0 0 96px" onchange="sr('testes',${i},'lado',this.value)">${opts(lado,r.lado)}</select><select onchange="sr('testes',${i},'res',this.value)">${opts(['Positivo','Negativo','Inconclusivo'],r.res)}</select></div>
+  <div class="row"><input value="${esc(r.obs)}" placeholder="Observação" oninput="sr('testes',${i},'obs',this.value)"></div></div>`).join('')}
+  <button class="btn bg bs" onclick="D.testes.push({nome:'',lado:'D',res:'Negativo',obs:''});render()">＋ Teste</button></div>
+  <div class="card"><div class="ct">Funcionalidade e observações</div>
+  <div class="fg"><label>Avaliação funcional (marcha, AVDs, escalas)</label><textarea rows="3" oninput="D.funcional=this.value">${esc(a.funcional)}</textarea></div>
+  <div class="fg"><label>Observações gerais</label><textarea rows="2" oninput="D.obs=this.value">${esc(a.obs)}</textarea></div></div>
+  <button class="btn bp bf" onclick="salvarAval()">💾 Salvar avaliação</button>
+  ${S.aid?`<button class="btn bd2 bf" style="margin-top:8px" onclick="excluirAval()">🗑 Excluir esta avaliação</button>`:''}`;
+}
+function salvarAval(){const p=pat(S.pid);const i=p.avaliacoes.findIndex(a=>a.id===D.id);if(i>=0)p.avaliacoes[i]=D;else p.avaliacoes.push(D);save();D=null;toast('✅ Avaliação salva');go('pac',{tab:'aval'})}
+function excluirAval(){if(!confirm('Excluir esta avaliação?'))return;const p=pat(S.pid);p.avaliacoes=p.avaliacoes.filter(a=>a.id!==D.id);save();D=null;go('pac',{tab:'aval'})}
+
+// ═══════════ EVOLUÇÃO SOAP / SESSÕES ═══════════
+function sessCard(p,s){
+  const st={realizada:['Realizada','ok'],agendada:['Agendada','blue'],faltou:['Faltou','red'],cancelada:['Cancelada','']}[s.status];
+  const soap=['S','O','A','P'].filter(k=>s[k]).map(k=>`<div class="soap"><b>${k}</b><span>${esc(s[k])}</span></div>`).join('');
+  let cob='';if(s.status==='realizada')cob=s.cortesia?'Cortesia':s.pacoteId?'Pacote':s.valor>0?`${brl(s.valor)} · ${s.pago?'pago':'em aberto'}`:'';
+  return`<div class="card" onclick="openSessao('${p.id}','${s.id}')" style="cursor:pointer"><div class="ct"><span>${fmtD(s.data)} ${esc(s.hora||'')}</span><span style="display:flex;gap:6px;align-items:center">${s.eva!=null?`<span class="chip" style="color:${evaCor(s.eva)}">EVA ${s.eva}</span>`:''}<span class="chip ${st[1]}">${st[0]}</span></span></div>
+  ${soap||'<div class="muted">Sem registro SOAP.</div>'}${cob?`<div class="muted" style="margin-top:8px">💰 ${cob}</div>`:''}</div>`;
+}
+function tabEvol(p){
+  const l=[...p.sessoes].sort((a,b)=>(a.data+(a.hora||''))<(b.data+(b.hora||''))?1:-1);
+  return`<div class="btns" style="margin:0 0 12px"><button class="btn bp" onclick="openSessao('${p.id}')">📝 Registrar evolução</button><button class="btn bo" onclick="openSessao('${p.id}',null,true)">📅 Agendar</button></div>
+  ${l.length?l.map(s=>sessCard(p,s)).join(''):`<div class="empty"><div>📝</div>Nenhuma sessão registrada.</div>`}`;
+}
+function openSessao(pid,sid,agendar,quick){
+  const p=pat(pid),s=sid?p.sessoes.find(x=>x.id===sid):null;
+  const st=s?.status||(agendar?'agendada':'realizada');
+  const pks=p.pacotes.filter(k=>usadas(p,k,sid)<k.total||k.id===s?.pacoteId);
+  const pkDefault=!s&&p.tipoCobranca==='pacote'?pacoteAtivo(p)?.id:null;
+  const cob=s?(s.cortesia?'cortesia':s.pacoteId||'avulsa'):(pkDefault||'avulsa');
+  const valor=s&&s.cobr!==undefined?s.valor:(s&&s.valor>0?s.valor:p.valorSessao||'');
+  const ultimo=[...real(p)].sort((a,b)=>a.data<b.data?1:-1)[0];
+  openModal(`<h3>${s?'Editar':'Nova'} sessão — ${esc(first(p.nome))}</h3>
+  <div class="row">${field('s_data','Data',s?.data||iso(),'date')}${field('s_hora','Hora',s?.hora||'','time')}</div>
+  <div class="fg"><label>Situação</label><select id="s_st" onchange="$('s_soap').style.display=this.value==='realizada'?'block':'none'">${opts([['agendada','Agendada'],['realizada','Realizada'],['faltou','Faltou'],['cancelada','Cancelada']],st)}</select></div>
+  <div id="s_soap" style="display:${st==='realizada'?'block':'none'}">
+  ${area('s_S','S — Subjetivo',s?.S,3,'Relato do paciente: dor, queixas, evolução desde a última sessão')}
+  ${area('s_O','O — Objetivo',s?.O,3,'Achados: ADM, força, edema, testes, observação clínica')}
+  ${area('s_A','A — Avaliação',s?.A,2,'Análise e raciocínio clínico: resposta ao tratamento, progresso')}
+  ${area('s_P','P — Plano / Conduta',s?.P,3,'Condutas realizadas hoje e plano para as próximas sessões')}
+  <div class="fg"><label>EVA da sessão</label><select id="s_eva">${opts([['','— não registrar'],...Array.from({length:11},(_,i)=>[String(i),String(i)])],s?.eva!=null?String(s.eva):'')}</select></div>
+  <div class="card" style="background:var(--card2)"><div class="ct">💰 Cobrança</div>
+  <div class="fg"><label>Forma</label><select id="s_cobr" onchange="$('s_vw').style.display=this.value==='avulsa'?'block':'none'">
+  <option value="avulsa" ${cob==='avulsa'?'selected':''}>Sessão avulsa</option>
+  ${pks.map(k=>`<option value="${k.id}" ${cob===k.id?'selected':''}>Pacote: ${esc(k.nome)} (restam ${k.total-usadas(p,k,sid)})</option>`).join('')}
+  <option value="cortesia" ${cob==='cortesia'?'selected':''}>Cortesia</option></select></div>
+  <div id="s_vw" style="display:${cob==='avulsa'?'block':'none'}"><div class="row">${field('s_valor','Valor (R$)',valor,'number','step="0.01" inputmode="decimal"')}
+  <div class="fg"><label>Forma de pagamento</label><select id="s_forma">${opts(['Pix','Dinheiro','Cartão'],s?.forma||'Pix')}</select></div></div>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px"><input type="checkbox" id="s_pago" ${s?.pago?'checked':''}> Pagamento recebido</label></div></div></div>
+  <div class="btns">${s?`<button class="btn bd2" style="flex:0 0 auto" onclick="excluirSessao('${pid}','${s.id}')">🗑</button>`:''}<button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="salvarSessao('${pid}','${s?.id||''}')">Salvar</button></div>`);
+}
+function salvarSessao(pid,sid){
+  const p=pat(pid),old=sid?p.sessoes.find(x=>x.id===sid):null;
+  if(!v('s_data'))return toast('⚠️ Informe a data');
+  const status=v('s_st');
+  const r={id:old?.id||uid(),data:v('s_data'),hora:v('s_hora'),status,S:v('s_S'),O:v('s_O'),A:v('s_A'),P:v('s_P'),eva:v('s_eva')===''?null:+v('s_eva')};
+  if(status==='realizada'){
+    const c=v('s_cobr');
+    if(c==='cortesia'){r.cortesia=true;r.valor=0;r.pago=true}
+    else if(c==='avulsa'){r.valor=+v('s_valor')||0;r.pago=$('s_pago').checked;r.forma=v('s_forma');if(r.pago)r.pagoEm=old?.pagoEm||iso()}
+    else{r.pacoteId=c;r.valor=0;r.pago=true}
+  }else{r.valor=0;r.pago=true;r.eva=null}
+  if(old)Object.assign(old,{pacoteId:undefined,cortesia:undefined,pagoEm:undefined,forma:undefined},r);else p.sessoes.push(r);
+  save();closeModal();render();toast('✅ Sessão salva');
+}
+function excluirSessao(pid,sid){if(!confirm('Excluir esta sessão?'))return;const p=pat(pid);p.sessoes=p.sessoes.filter(s=>s.id!==sid);save();closeModal();render()}
+
+// ═══════════ PLANO DE TRATAMENTO, METAS E ALTA ═══════════
+const MS={andamento:['Em andamento','blue'],atingida:['Atingida','ok'],parcial:['Parcial','org'],naoatingida:['Não atingida','red']};
+const PZ={curto:'Curto prazo',medio:'Médio prazo',longo:'Longo prazo'};
+function tabPlano(p){
+  const pl=p.plano,n=real(p).length,prev=+pl.prev||0,al=pl.alta;
+  const ev=evaPts(p),m=pl.metas,ok=m.filter(x=>x.status==='atingida').length;
+  return`<div class="card"><div class="ct">Plano de tratamento</div>
+  ${area('pl_dx','Diagnóstico fisioterapêutico',pl.dx,2,'Ex: Síndrome do impacto subacromial D com déficit de força do manguito')}
+  ${area('pl_obj','Objetivo geral',pl.obj,2)}
+  ${area('pl_cond','Condutas / recursos terapêuticos',pl.cond,3,'Cinesioterapia, terapia manual, eletroterapia, educação...')}
+  <div class="row">${field('pl_freq','Frequência (x/semana)',pl.freq,'number','inputmode="numeric"')}${field('pl_prev','Sessões previstas',pl.prev,'number','inputmode="numeric"')}</div>
+  <button class="btn bp bf" onclick="salvarPlano()">💾 Salvar plano</button>
+  ${prev?`<div class="muted" style="margin-top:12px">${n} de ${prev} sessões realizadas</div><div class="bar"><i style="width:${Math.min(100,Math.round(n/prev*100))}%"></i></div>`:''}</div>
+  <div class="card"><div class="ct">🎯 Metas <button class="btn bg bs" onclick="metaModal()">＋ Meta</button></div>
+  ${m.length?m.map(g=>`<div class="ln" style="align-items:center"><div style="flex:1"><div style="font-size:13.5px;font-weight:600">${esc(g.texto)}</div><div class="muted">${PZ[g.prazo]||''}${g.data?' · até '+fmtD(g.data):''}</div></div>
+  <span class="chip ${MS[g.status][1]}" style="cursor:pointer" onclick="ciclaMeta('${g.id}')">${MS[g.status][0]}</span><button class="x" onclick="rmMeta('${g.id}')">✕</button></div>`).join('')+`<div class="muted" style="margin-top:8px">Toque na situação para alterá-la.</div>`:`<div class="muted">Defina metas mensuráveis (ex: “flexão de joelho ≥ 120° em 4 semanas”).</div>`}</div>
+  ${al?`<div class="card" style="border-color:var(--ac)"><div class="ct">✅ Alta em ${fmtD(al.data)}</div>
+  <div class="ln"><span>Motivo</span><b>${esc(al.motivo)}</b></div>
+  <div class="ln"><span>Sessões realizadas</span><b>${n}</b></div>
+  <div class="ln"><span>EVA inicial → final</span><b>${ev.length?ev[0].v+' → '+ev[ev.length-1].v:'—'}</b></div>
+  <div class="ln"><span>Metas atingidas</span><b>${ok}/${m.length}</b></div>
+  ${al.resumo?`<div class="soap"><b>R</b><span>${esc(al.resumo)}</span></div>`:''}${al.orient?`<div class="soap"><b>O</b><span>${esc(al.orient)}</span></div>`:''}
+  <div class="btns"><button class="btn bg" onclick="reabrir('${p.id}')">↩️ Reabrir tratamento</button><button class="btn bo" onclick="imprimir('${p.id}')">📄 Relatório de alta</button></div></div>`
+  :`<button class="btn bo bf" onclick="altaModal()">🏁 Registrar alta</button>`}`;
+}
+function salvarPlano(){const p=pat(S.pid);Object.assign(p.plano,{dx:v('pl_dx'),obj:v('pl_obj'),cond:v('pl_cond'),freq:v('pl_freq'),prev:v('pl_prev')});save();render();toast('✅ Plano salvo')}
+function metaModal(){openModal(`<h3>Nova meta</h3>${area('m_t','Meta (mensurável)','',2,'Ex: Subir 2 lances de escada sem dor (EVA ≤ 2)')}
+  <div class="row"><div class="fg"><label>Prazo</label><select id="m_p">${opts([['curto','Curto'],['medio','Médio'],['longo','Longo']],'curto')}</select></div>${field('m_d','Data alvo','','date')}</div>
+  <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="addMeta()">Adicionar</button></div>`)}
+function addMeta(){const t=v('m_t');if(!t)return toast('⚠️ Descreva a meta');pat(S.pid).plano.metas.push({id:uid(),texto:t,prazo:v('m_p'),data:v('m_d'),status:'andamento'});save();closeModal();render()}
+function ciclaMeta(id){const g=pat(S.pid).plano.metas.find(x=>x.id===id),k=Object.keys(MS);g.status=k[(k.indexOf(g.status)+1)%k.length];save();render()}
+function rmMeta(id){const p=pat(S.pid);p.plano.metas=p.plano.metas.filter(x=>x.id!==id);save();render()}
+function altaModal(){openModal(`<h3>Registrar alta</h3>${field('a_d','Data da alta',iso(),'date')}
+  <div class="fg"><label>Motivo</label><select id="a_m">${opts(['Objetivos alcançados','Alta a pedido do paciente','Abandono do tratamento','Encaminhamento a outro profissional','Estabilização do quadro (platô)'],'Objetivos alcançados')}</select></div>
+  ${area('a_r','Resumo da evolução / resultado final',(pat(S.pid).plano.alta||{}).resumo,4)}${area('a_o','Orientações pós-alta','',3,'Exercícios domiciliares, cuidados, sinais de alerta, retorno...')}
+  <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="salvarAlta()">Confirmar alta</button></div>`)}
+function salvarAlta(){const p=pat(S.pid);p.plano.alta={data:v('a_d'),motivo:v('a_m'),resumo:v('a_r'),orient:v('a_o')};p.status='alta';save();closeModal();render();toast('✅ Alta registrada')}
+function reabrir(pid){const p=pat(pid);p.status='ativo';p.plano.alta=null;save();render();toast('Tratamento reaberto')}
+
+// ═══════════ FINANCEIRO ═══════════
+function recebimentos(p){const r=[];p.sessoes.forEach(s=>{if(s.status==='realizada'&&s.pago&&s.valor>0&&s.pagoEm)r.push({d:s.pagoEm,v:s.valor,f:s.forma,t:'Sessão '+fmtD(s.data),n:p.nome})});p.pacotes.forEach(k=>{if(k.pago&&k.pagoEm)r.push({d:k.pagoEm,v:k.valor,f:k.forma,t:'Pacote '+k.nome,n:p.nome})});return r}
+function tabFin(p){
+  const pend=p.sessoes.filter(s=>s.status==='realizada'&&!s.pago&&s.valor>0).sort((a,b)=>a.data<b.data?-1:1);
+  const d=devedor(p);
+  return`<div class="stats" style="grid-template-columns:1fr 1fr"><div class="stat"><div class="sv" style="color:${d>0?'var(--red)':'var(--ac)'};font-size:18px">${brl(d)}</div><div class="sl">Em aberto</div></div>
+  <div class="stat"><div class="sv" style="font-size:16px;padding-top:2px">${p.tipoCobranca==='pacote'?'Pacote':brl(p.valorSessao)}</div><div class="sl">${p.tipoCobranca==='pacote'?'Modalidade':'Valor da sessão'}</div></div></div>
+  ${d>0?`<button class="btn bo bf" style="margin-bottom:12px" onclick="wa('${esc(p.tel)}','Olá, ${esc(first(p.nome))}! Passando para combinar o pagamento em aberto das sessões de fisioterapia: ${brl(d)}. Obrigada! 😊')">💬 Enviar cobrança por WhatsApp</button>`:''}
+  <div class="card"><div class="ct">📦 Pacotes <button class="btn bg bs" onclick="pacoteModal('${p.id}')">＋ Pacote</button></div>
+  ${p.pacotes.length?p.pacotes.map(k=>{const u=usadas(p,k);return`<div style="padding:9px 0;border-bottom:1px solid var(--bd)"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b style="font-size:13.5px">${esc(k.nome)}</b><div class="muted">${u}/${k.total} sessões · ${brl(k.valor)}</div></div>
+  ${k.pago?`<span class="chip ok" style="cursor:pointer" onclick="desfazPago('pacote','${p.id}','${k.id}')">Pago ${fmtD(k.pagoEm)}</span>`:`<button class="btn bp bs" onclick="pagarModal('pacote','${p.id}','${k.id}')">Receber</button>`}<button class="x" onclick="rmPacote('${p.id}','${k.id}')">✕</button></div><div class="bar"><i style="width:${Math.round(u/k.total*100)}%"></i></div></div>`}).join(''):`<div class="muted">Nenhum pacote. ${p.pacoteQtd?'Use “＋ Pacote” para vender o pacote padrão.':''}</div>`}</div>
+  <div class="card"><div class="ct">Sessões avulsas em aberto</div>${pend.length?pend.map(s=>`<div class="ln" style="align-items:center"><span>${fmtD(s.data)}</span><b>${brl(s.valor)}</b><button class="btn bp bs" onclick="pagarModal('sessao','${p.id}','${s.id}')">Receber</button></div>`).join(''):`<div class="muted">Nada em aberto. ✅</div>`}</div>`;
+}
+function pacoteModal(pid){const p=pat(pid);openModal(`<h3>Novo pacote</h3>${field('k_n','Nome',p.pacoteQtd?`Pacote ${p.pacoteQtd} sessões`:'Pacote de sessões')}
+  <div class="row">${field('k_q','Nº de sessões',p.pacoteQtd||'','number','inputmode="numeric"')}${field('k_v','Valor total (R$)',p.pacoteValor||'','number','step="0.01" inputmode="decimal"')}</div>
+  <label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px;margin-bottom:10px"><input type="checkbox" id="k_p"> Já foi pago</label>
+  <div class="fg"><label>Forma de pagamento</label><select id="k_f">${opts(['Pix','Dinheiro','Cartão'],'Pix')}</select></div>
+  <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="addPacote('${pid}')">Adicionar</button></div>`)}
+function addPacote(pid){const q=+v('k_q'),val=+v('k_v');if(!q||q<1)return toast('⚠️ Informe o nº de sessões');const pago=$('k_p').checked;pat(pid).pacotes.push({id:uid(),nome:v('k_n')||'Pacote',total:q,valor:val||0,data:iso(),pago,pagoEm:pago?iso():null,forma:v('k_f')});save();closeModal();render()}
+function rmPacote(pid,kid){if(!confirm('Excluir este pacote? Sessões já vinculadas ficam sem cobrança.'))return;const p=pat(pid);p.pacotes=p.pacotes.filter(k=>k.id!==kid);save();render()}
+function pagarModal(tipo,pid,id){openModal(`<h3>Registrar recebimento</h3>${field('r_d','Data do recebimento',iso(),'date')}<div class="fg"><label>Forma</label><select id="r_f">${opts(['Pix','Dinheiro','Cartão'],'Pix')}</select></div>
+  <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="confirmaPago('${tipo}','${pid}','${id}')">Confirmar</button></div>`)}
+function confirmaPago(tipo,pid,id){const p=pat(pid),o=tipo==='pacote'?p.pacotes.find(k=>k.id===id):p.sessoes.find(s=>s.id===id);o.pago=true;o.pagoEm=v('r_d')||iso();o.forma=v('r_f');save();closeModal();render();toast('✅ Recebimento registrado')}
+function desfazPago(tipo,pid,id){if(!confirm('Marcar como não pago?'))return;const p=pat(pid),o=tipo==='pacote'?p.pacotes.find(k=>k.id===id):p.sessoes.find(s=>s.id===id);o.pago=false;o.pagoEm=null;save();render()}
+function viewFin(){
+  const mes=iso().slice(0,7);
+  let rec=[];db.patients.forEach(p=>rec=rec.concat(recebimentos(p)));
+  rec=rec.filter(r=>r.d.startsWith(mes)).sort((a,b)=>a.d<b.d?1:-1);
+  const total=rec.reduce((n,r)=>n+r.v,0),dev=db.patients.map(p=>({p,d:devedor(p)})).filter(x=>x.d>0).sort((a,b)=>b.d-a.d);
+  const sessMes=db.patients.reduce((n,p)=>n+real(p).filter(s=>s.data.startsWith(mes)).length,0);
+  return`<div class="stats"><div class="stat"><div class="sv" style="color:var(--ac);font-size:16px;padding-top:2px">${brl(total)}</div><div class="sl">Recebido no mês</div></div>
+  <div class="stat"><div class="sv" style="color:var(--red);font-size:16px;padding-top:2px">${brl(dev.reduce((n,x)=>n+x.d,0))}</div><div class="sl">A receber</div></div>
+  <div class="stat"><div class="sv">${sessMes}</div><div class="sl">Sessões no mês</div></div></div>
+  <div class="card"><div class="ct">Pacientes com valores em aberto</div>${dev.length?dev.map(({p,d})=>`<div class="ln" style="align-items:center"><span style="cursor:pointer;color:var(--tx)" onclick="go('pac',{pid:'${p.id}',tab:'fin'})">${esc(p.nome)}</span><b style="color:var(--red)">${brl(d)}</b>
+  <button class="btn bs bo" onclick="wa('${esc(p.tel)}','Olá, ${esc(first(p.nome))}! Passando para combinar o pagamento em aberto das sessões de fisioterapia: ${brl(d)}. Obrigada! 😊')">💬</button></div>`).join(''):`<div class="muted">Tudo em dia. ✅</div>`}</div>
+  <div class="card"><div class="ct">Recebimentos do mês</div>${rec.length?rec.map(r=>`<div class="ln"><span>${fmtD(r.d)} · ${esc(r.n)}<br><small style="color:var(--tx3)">${esc(r.t)}${r.f?' · '+esc(r.f):''}</small></span><b>${brl(r.v)}</b></div>`).join(''):`<div class="muted">Nenhum recebimento neste mês ainda.</div>`}</div>`;
+}
+
+// ═══════════ AGENDA ═══════════
+function viewAgenda(){
+  const all=[];db.patients.forEach(p=>p.sessoes.forEach(s=>{if(s.status==='agendada')all.push({p,s})}));
+  all.sort((a,b)=>(a.s.data+(a.s.hora||''))<(b.s.data+(b.s.hora||''))?-1:1);
+  const t=iso(),g={'⏰ Pendentes de registro':all.filter(x=>x.s.data<t),'Hoje':all.filter(x=>x.s.data===t),'Próximas':all.filter(x=>x.s.data>t)};
+  const card=({p,s})=>`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div><b>${esc(p.nome)}</b><div class="muted">${fmtD(s.data)} ${esc(s.hora||'')}</div></div>
+  <div style="display:flex;gap:6px"><button class="btn bs bo" onclick="wa('${esc(p.tel)}','Olá, ${esc(first(p.nome))}! Lembrando da sua sessão de fisioterapia em ${fmtD(s.data)}${s.hora?' às '+esc(s.hora):''}. Qualquer imprevisto, me avise com antecedência 😊')">💬</button><button class="btn bs bg" onclick="marcaFalta('${p.id}','${s.id}')">Faltou</button><button class="btn bs bp" onclick="registrar('${p.id}','${s.id}')">Registrar</button></div></div></div>`;
+  const body=Object.entries(g).filter(([,l])=>l.length).map(([k,l])=>`<div class="ct" style="margin-top:6px">${k}</div>${l.map(card).join('')}`).join('');
+  return`<button class="btn bp bf" style="margin-bottom:14px" onclick="agendarModal()">📅 Agendar sessão</button>${body||`<div class="empty"><div>📅</div>Nenhuma sessão agendada.</div>`}`;
+}
+function registrar(pid,sid){const p=pat(pid),s=p.sessoes.find(x=>x.id===sid);s.status='realizada';openSessao(pid,sid);s.status='agendada'}
+function marcaFalta(pid,sid){const s=pat(pid).sessoes.find(x=>x.id===sid);s.status='faltou';save();render();toast('Falta registrada')}
+function agendarModal(){
+  const ps=db.patients.filter(p=>p.status!=='alta');if(!ps.length)return toast('Cadastre um paciente primeiro');
+  openModal(`<h3>Agendar sessão</h3><div class="fg"><label>Paciente</label><select id="g_p">${ps.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('')}</select></div>
+  <div class="row">${field('g_d','Data',iso(),'date')}${field('g_h','Hora','','time')}</div>
+  <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="salvarAgenda()">Agendar</button></div>`);
+}
+function salvarAgenda(){if(!v('g_d'))return toast('⚠️ Informe a data');pat(v('g_p')).sessoes.push({id:uid(),data:v('g_d'),hora:v('g_h'),status:'agendada',valor:0,pago:true});save();closeModal();render();toast('✅ Sessão agendada')}
+
+// ═══════════ AJUSTES / BACKUP / PRONTUÁRIO PDF ═══════════
+function viewCfg(){
+  const s=db.settings;
+  return`<div class="card"><div class="ct">Profissional (aparece no prontuário impresso)</div>${field('t_nome','Nome',s.nome)}<div class="row">${field('t_cr','CREFITO',s.crefito)}${field('t_tel','Telefone',s.tel,'tel')}</div>${field('t_cl','Clínica / consultório',s.clinica)}
+  <button class="btn bp bf" onclick="salvarCfg()">💾 Salvar</button></div>
+  <div class="card"><div class="ct">🛡️ Backup dos dados</div><div class="muted" style="margin-bottom:12px">Os dados ficam guardados somente neste aparelho/navegador. Baixe um backup com frequência e guarde em local seguro — se o navegador for limpo ou o celular trocado, sem backup tudo se perde.</div>
+  <div class="btns" style="margin:0"><button class="btn bp" onclick="exportar()">⬇️ Baixar backup</button><button class="btn bg" onclick="$('bkfile').click()">⬆️ Restaurar</button></div></div>
+  <div class="card"><div class="ct">🔒 Privacidade (LGPD)</div><div class="muted">Prontuários são dados sensíveis de saúde. Mantenha o aparelho protegido por senha/biometria, guarde os backups com cuidado e colete o consentimento do paciente (campo disponível no cadastro).</div></div>`;
+}
+function salvarCfg(){db.settings={nome:v('t_nome'),crefito:v('t_cr'),tel:v('t_tel'),clinica:v('t_cl')};save();toast('✅ Salvo')}
+function exportar(){const b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fisioapp-backup-'+iso()+'.json';document.body.appendChild(a);a.click();a.remove();toast('⬇️ Backup baixado')}
+async function importar(e){const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d.patients)throw 0;if(!confirm('Restaurar substitui TODOS os dados atuais pelos do arquivo. Continuar?'))return;db=d;save();toast('✅ Backup restaurado');go('home')}catch(x){toast('❌ Arquivo inválido')}}
+function imprimir(pid){
+  const p=pat(pid),s=db.settings,pl=p.plano;
+  const sec=(t,b)=>b?`<h2>${t}</h2>${b}`:'';
+  const kv=(k,val)=>val?`<p><b>${k}:</b> ${esc(val)}</p>`:'';
+  const avs=[...p.avaliacoes].sort((a,b)=>a.data<b.data?-1:1).map(a=>`<h3>${esc(a.tipo)} — ${fmtD(a.data)} · EVA ${a.eva??'—'}/10 ${esc(a.evaLocal)}</h3>${kv('Inspeção',a.inspecao)}${kv('Palpação',a.palpacao)}
+  ${a.adm.length?`<table><tr><th>ADM</th><th>Lado</th><th>Ativa</th><th>Passiva</th><th>Ref.</th></tr>${a.adm.map(r=>`<tr><td>${esc(r.mov)}${r.dor?' (dor)':''}</td><td>${esc(r.lado)}</td><td>${esc(r.ativa)}°</td><td>${esc(r.passiva)}°</td><td>${esc(r.ref)}°</td></tr>`).join('')}</table>`:''}
+  ${a.forca.length?`<table><tr><th>Força</th><th>Lado</th><th>Grau</th></tr>${a.forca.map(r=>`<tr><td>${esc(r.musculo)}</td><td>${esc(r.lado)}</td><td>${esc(r.grau)}/5</td></tr>`).join('')}</table>`:''}
+  ${a.testes.length?`<table><tr><th>Teste</th><th>Lado</th><th>Resultado</th><th>Obs.</th></tr>${a.testes.map(r=>`<tr><td>${esc(r.nome)}</td><td>${esc(r.lado)}</td><td>${esc(r.res)}</td><td>${esc(r.obs)}</td></tr>`).join('')}</table>`:''}${kv('Funcional',a.funcional)}${kv('Obs.',a.obs)}`).join('');
+  const sess=[...real(p)].sort((a,b)=>a.data<b.data?-1:1).map(x=>`<div class="s"><b>${fmtD(x.data)} ${esc(x.hora||'')}${x.eva!=null?' · EVA '+x.eva:''}</b>${['S','O','A','P'].filter(k=>x[k]).map(k=>`<p><b>${k}:</b> ${esc(x[k])}</p>`).join('')}</div>`).join('');
+  const metas=pl.metas.map(g=>`<li>${esc(g.texto)} — <i>${MS[g.status][0]}</i></li>`).join('');
+  const al=pl.alta;
+  const h=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Prontuário — ${esc(p.nome)}</title><style>body{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:0 auto;padding:24px;font-size:13px;line-height:1.5}h1{font-size:20px;margin-bottom:2px}h2{font-size:14px;border-bottom:2px solid #8a6a0a;color:#8a6a0a;margin:22px 0 8px;padding-bottom:3px;text-transform:uppercase}h3{font-size:13px;margin:12px 0 4px}table{width:100%;border-collapse:collapse;margin:6px 0}th,td{border:1px solid #ccc;padding:4px 7px;text-align:left;font-size:12px}th{background:#f6f0d6}p{margin:3px 0}.s{border-left:3px solid #8a6a0a;padding-left:10px;margin:10px 0;page-break-inside:avoid}.hd{display:flex;justify-content:space-between;border-bottom:1px solid #999;padding-bottom:8px}.bt{margin-bottom:14px}@media print{.bt{display:none}}</style></head><body>
+  <button class="bt" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  <div class="hd"><div><h1>${esc(s.clinica||'Prontuário de Fisioterapia')}</h1><div>${esc(s.nome)}${s.crefito?' · CREFITO '+esc(s.crefito):''}${s.tel?' · '+esc(s.tel):''}</div></div><div style="text-align:right">Emitido em ${fmtD(iso())}</div></div>
+  <h2>Identificação</h2><p><b>${esc(p.nome)}</b> ${idade(p.nasc)?'· '+idade(p.nasc):''} ${p.sexo?'· '+esc(p.sexo):''}</p>${kv('Profissão',p.prof)}${kv('Telefone',p.tel)}${kv('Diagnóstico médico',p.dxMedico)}${kv('Encaminhador',p.medico)}${kv('Alertas',p.alerta)}
+  ${sec('Anamnese',kv('Queixa principal',p.queixa)+kv('HDA',p.hda)+kv('Antecedentes',p.ant)+kv('Medicamentos',p.meds))}
+  ${sec('Avaliações',avs)}
+  ${sec('Plano de tratamento',kv('Diagnóstico fisioterapêutico',pl.dx)+kv('Objetivo geral',pl.obj)+kv('Condutas',pl.cond)+kv('Frequência',pl.freq?pl.freq+'x/semana':'')+kv('Sessões previstas',pl.prev)+(metas?`<p><b>Metas:</b></p><ul>${metas}</ul>`:''))}
+  ${sec('Evolução por sessão (SOAP)',sess)}
+  ${al?sec('Alta',kv('Data',fmtD(al.data))+kv('Motivo',al.motivo)+kv('Resumo',al.resumo)+kv('Orientações',al.orient)):''}
+  <p style="margin-top:50px;text-align:center">_______________________________<br>${esc(s.nome)}${s.crefito?' — CREFITO '+esc(s.crefito):''}</p></body></html>`;
+  const w=window.open('','_blank');if(!w)return toast('⚠️ Permita pop-ups para gerar o PDF');w.document.write(h);w.document.close();
+}
+render();
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+</script>
+</body>
+</html>
