@@ -81,6 +81,11 @@ input[type=checkbox]{width:auto}
 .ev{border-radius:5px;padding:2px 3px;margin-bottom:2px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:3px solid}.ev.rc{background:var(--acd);border-color:var(--ac);color:var(--ac)}.ev.ind{background:rgba(79,191,106,.16);border-color:var(--blue);color:var(--blue)}.ev.ok{background:var(--card2);border-color:var(--tx3);color:var(--tx3)}.ev.red{border-color:var(--red);color:var(--red)}.ev.mut{opacity:.4;border-color:var(--tx3)}
 .wn{display:flex;align-items:center;gap:8px;margin-bottom:10px}.wn b{flex:1;text-align:center;font-size:13px}
 #pv{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column;padding-top:var(--st)}#pv.on{display:flex}.pvb{display:flex;gap:6px;padding:10px 12px;background:var(--sf);border-bottom:1px solid var(--bd)}.pvb .btn{padding:9px 10px;font-size:12.5px}#pvf{flex:1;border:0;background:#fff;width:100%}
+.agt{border-collapse:separate;border-spacing:5px 6px;min-width:560px}.agt th{font-size:10.5px;color:var(--tx3);font-weight:700;letter-spacing:.5px;padding:2px 0;text-align:center;width:66px}.agt th.td{color:var(--ac)}.agt th small{display:block;font-size:11px}
+.agt td{padding:0;vertical-align:middle}.agt td.nm{position:sticky;left:0;z-index:2;background:var(--bg);min-width:96px;max-width:96px;padding-right:4px}.agt .nm b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.agt .nm i{display:block;font-style:normal;font-size:11px;color:var(--tx2);margin-bottom:4px}.agt .nm button{width:100%;border:1px solid var(--bd);background:var(--card);color:var(--tx3);border-radius:8px;font-size:10px;padding:3px 0;font-family:inherit;cursor:pointer}
+.sb{width:100%;min-height:46px;border-radius:10px;border:1.5px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font-family:inherit;font-size:9.5px;font-weight:700;cursor:pointer;background:var(--card)}.sb b{font-size:17px;line-height:1.1}.sb:active{transform:scale(.95)}
+.sb.rc{border-color:var(--ac);color:var(--ac);background:var(--acd)}.sb.ind{border-color:#4f9fd4;color:#4f9fd4;background:rgba(79,159,212,.14)}.sb.ok{border-color:var(--blue);color:var(--blue);background:rgba(79,191,106,.16)}.sb.red{border-color:var(--red);color:var(--red);background:rgba(255,107,107,.12)}.sb.mut{border-color:var(--bd);color:var(--tx3);opacity:.6}
+.dsh{display:block;text-align:center;color:var(--tx3);padding:14px 0;font-size:14px}
 @media(min-width:700px){#main{padding:20px calc(50% - 320px)}}
 </style>
 </head>
@@ -141,7 +146,7 @@ $('dl-forca').innerHTML=FORCA_P.map(a=>`<option value="${a}">`).join('');
 $('dl-testes').innerHTML=TESTES_P.map(a=>`<option value="${a}">`).join('');
 
 // ═══════════ NAVEGAÇÃO ═══════════
-const S={view:'home',pid:null,tab:'resumo',q:'',f:'todos',aid:null,ag:'sem',wk:0,mes:iso().slice(0,7)};
+const S={view:'home',pid:null,tab:'resumo',q:'',f:'todos',aid:null,ag:'sem',wk:0,sx:null,flt:{rc:1,ind:1,ok:1,red:1},mes:iso().slice(0,7)};
 let D=null; // rascunho da avaliação em edição
 function go(view,o={}){Object.assign(S,{view},o);render();$('main').scrollTop=0}
 function back(){if(S.view==='aval'){D=null;go('pac',{tab:'aval'})}else go('home')}
@@ -150,6 +155,7 @@ function render(){
   const views={home:viewHome,agenda:viewAgenda,fin:viewFin,cfg:viewCfg,pac:viewPac,aval:viewAval};
   m.innerHTML=views[S.view]();
   m.scrollTop=st;
+  const aw=$('agw');if(aw)aw.scrollLeft=S.sx==null?Math.max(0,(+aw.dataset.t-1)*66):S.sx;
   const base=(S.view==='pac'||S.view==='aval')?'home':S.view;
   document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on',n.dataset.v===base));
   const sub=S.view==='pac'||S.view==='aval';
@@ -468,24 +474,43 @@ function ocorr(d){
 function viewAgenda(){
   const tb=`<div class="tabs">${[['sem','📆 Semana'],['lista','📋 Lista']].map(([k,l])=>`<span class="tab ${S.ag===k?'on':''}" onclick="S.ag='${k}';render()">${l}</span>`).join('')}</div>`;
   return tb+(S.ag==='lista'?viewLista():viewSemana())}
+function cat(x){const st=x.s?x.s.status:'agendada';return st==='realizada'?'ok':st==='faltou'?'red':st==='cancelada'?'mut':x.rec?'rc':'ind'}
 function viewSemana(){
-  const m=segunda(S.wk),t=iso(),dias=[0,1,2,3,4,5].map(i=>{const d=new Date(m);d.setDate(m.getDate()+i);return iso(d)}),it=dias.map(ocorr);
-  let h0=7,h1=19;it.flat().forEach(x=>{const h=parseInt(x.h);if(!isNaN(h)){h0=Math.min(h0,h);h1=Math.max(h1,h)}});
-  const sem=it.some(l=>l.some(x=>!x.h)),rows=[];if(sem)rows.push('');for(let h=h0;h<=h1;h++)rows.push(String(h).padStart(2,'0'));
-  const ev=x=>{
-    const nm=esc(first(x.p.nome)),hh=x.h&&x.h.slice(3)!=='00'?x.h.slice(3)+' ':'';
-    const st=x.s?x.s.status:'agendada',cls=st==='realizada'?'ok':st==='faltou'?'red':st==='cancelada'?'mut':x.rec?'rc':'ind';
-    const oc=x.virt?`evV('${x.r.id}','${x.d}')`:`evS('${x.p.id}','${x.s.id}')`;
-    return`<div class="ev ${cls}" onclick="event.stopPropagation();${oc}">${x.rec?'↻ ':''}${hh}${nm}</div>`};
+  const m=segunda(S.wk),t=iso(),dias=[0,1,2,3,4,5,6].map(i=>{const d=new Date(m);d.setDate(m.getDate()+i);return iso(d)}),it=dias.map(ocorr);
+  const R={};it.forEach((l,i)=>l.forEach(x=>{const k=x.p.id+'|'+x.h;(R[k]=R[k]||{p:x.p,h:x.h,c:Array(7).fill(null)}).c[i]=x}));
+  const vis=x=>x&&(cat(x)==='mut'||S.flt[cat(x)]);
+  const rows=Object.values(R).filter(r=>r.c.some(vis)).sort((a,b)=>a.h<b.h?-1:a.h>b.h?1:a.p.nome.localeCompare(b.p.nome,'pt'));
+  const ic={rc:'🔁',ind:'📅',ok:'✅',red:'❌',mut:'🚫'},lb={rc:'Agendado',ind:'Agendado',ok:'Presente',red:'Falta',mut:'Cancelada'};
+  const btn=(x,d)=>{const c=cat(x);return`<button class="sb ${c}" onclick="cic('${x.p.id}','${x.s?x.s.id:''}','${x.r?x.r.id:''}','${d}')"><b>${ic[c]}</b>${lb[c]}${x.rec&&c!=='rc'?' ↻':''}</button>`};
+  const a=dias[0],b=dias[6],ti=dias.indexOf(t);
+  const fl=(k,l,cl,sty)=>`<span class="chip ${cl}" style="cursor:pointer;opacity:${S.flt[k]?1:.35};${sty||''}" onclick="S.flt.${k}=S.flt.${k}?0:1;render()">${l}</span>`;
   const dn=r=>r.dias.map(n=>DIAS[n]).join('·')+' '+r.hora;
-  const cell=(i,hr)=>`<td onclick="agendarModal('${dias[i]}','${hr?hr+':00':''}')">${it[i].filter(x=>hr===''?!x.h:parseInt(x.h)===+hr).sort((a,b)=>a.h<b.h?-1:1).map(x=>ev({...x,d:dias[i]})).join('')}</td>`;
-  const a=dias[0],b=dias[5];
-  return`<div class="wn"><button class="btn bg bs" onclick="S.wk--;render()">‹</button><b>${a.slice(8)}/${a.slice(5,7)} – ${b.slice(8)}/${b.slice(5,7)}</b>${S.wk?`<button class="btn bo bs" onclick="S.wk=0;render()">Hoje</button>`:''}<button class="btn bg bs" onclick="S.wk++;render()">›</button></div>
-  <div style="overflow-x:auto;margin-bottom:10px"><table class="wk"><tr><th></th>${dias.map((d,i)=>`<th class="${d===t?'td':''}">${DIAS[i+1]}<br>${d.slice(8)}</th>`).join('')}</tr>
-  ${rows.map(h=>`<tr><td class="hr" style="cursor:default">${h===''?'s/ hora':h+'h'}</td>${dias.map((d,i)=>cell(i,h)).join('')}</tr>`).join('')}</table></div>
-  <div class="muted" style="margin-bottom:12px"><span class="chip ok">↻ recorrente</span> <span class="chip blue">individual</span> <span class="chip">realizada</span> <span class="chip red">faltou</span> · toque num horário vazio para agendar</div>
+  return`<div class="card" style="padding:10px 12px"><div class="ct" style="margin:0"><span>📅 ${S.wk===0?'Semana atual':'Semana'}</span><span style="display:flex;gap:6px;align-items:center;color:var(--tx2);font-family:'DM Sans'"><button class="btn bg bs" onclick="S.wk--;S.sx=null;render()">‹</button>${a.slice(8)}/${a.slice(5,7)} – ${b.slice(8)}/${b.slice(5,7)}<button class="btn bg bs" onclick="S.wk++;S.sx=null;render()">›</button>${S.wk?`<button class="btn bo bs" onclick="S.wk=0;S.sx=null;render()">Hoje</button>`:''}</span></div></div>
+  <div class="fl">${fl('rc','↻ Recorrentes','ok')}${fl('ind','Individual','','color:#4f9fd4;border-color:#4f9fd4')}${fl('ok','Realizado','blue')}${fl('red','Faltou','red')}</div>
+  ${rows.length?`<div id="agw" data-t="${ti<0?0:ti}" style="overflow-x:auto;margin:0 -4px 10px" onscroll="S.sx=this.scrollLeft"><table class="agt"><tr><th style="text-align:left;width:96px">PACIENTE</th>${dias.map((d,i)=>`<th class="${d===t?'td':''}">${DIAS[(i+1)%7]}<small>${d.slice(8)}</small></th>`).join('')}</tr>
+  ${rows.map(r=>`<tr><td class="nm"><b>${esc(first(r.p.nome))}</b><i>${r.h||'sem hora'}</i><button onclick="cfgRow('${r.p.id}','${r.h}')">⚙ Config</button></td>${r.c.map((x,i)=>`<td>${vis(x)?btn(x,dias[i]):x?'<span class="dsh">·</span>':`<span class="dsh" onclick="agendarModal('${dias[i]}','${r.h}','${r.p.id}')">—</span>`}</td>`).join('')}</tr>`).join('')}</table></div>
+  <div class="muted" style="margin-bottom:12px">Toque no botão para alternar: Agendado → Presente → Falta. Toque em “—” para incluir uma reposição naquele dia.</div>`
+  :`<div class="empty"><div>📆</div>Nenhum atendimento nesta semana${Object.keys(R).length?' com os filtros atuais':''}.</div>`}
   <button class="btn bp bf" style="margin-bottom:12px" onclick="agendarModal()">📅 Agendar (individual ou recorrente)</button>
   <div class="card"><div class="ct">↻ Atendimentos recorrentes</div>${db.recorr.length?db.recorr.map(r=>{const p=pat(r.pid);return p?`<div class="ln" style="align-items:center"><span style="color:var(--tx)">${esc(p.nome)}<br><small style="color:var(--tx3)">${dn(r)}${r.fim?' · até '+fmtD(r.fim):''}</small></span><button class="x" onclick="rmRec('${r.id}')">✕</button></div>`:''}).join(''):'<div class="muted">Nenhum. Ex.: Sr. João — SEG·QUA·SEX às 08:00.</div>'}</div>`}
+function setSt(p,s,st){
+  Object.assign(s,{status:st,pacoteId:undefined,cortesia:undefined,pagoEm:undefined,forma:undefined,valor:0,pago:true});
+  if(st==='realizada'){
+    const k=p.tipoCobranca==='pacote'?pacoteAtivo(p):null;
+    if(k)s.pacoteId=k.id;else if(p.valorSessao>0){s.valor=p.valorSessao;s.pago=false}
+    if(!s.tipo){const u=real(p).filter(x=>x.tipo).sort((a,b)=>a.data<b.data?1:-1)[0];if(u)s.tipo=u.tipo}
+  }else s.eva=null}
+function cic(pid,sid,rid,d){
+  const p=pat(pid);let s=sid?p.sessoes.find(x=>x.id===sid):null;const cur=s?s.status:'agendada';
+  if(cur==='realizada'&&s.pago&&s.valor>0&&s.pagoEm&&!confirm('Esta sessão já tem pagamento registrado. Alterar mesmo assim?'))return;
+  if(!s){const r=db.recorr.find(x=>x.id===rid);s={id:uid(),data:d,hora:r.hora,status:'agendada',valor:0,pago:true,rec:rid};p.sessoes.push(s)}
+  const nx=cur==='realizada'?'faltou':cur==='faltou'?'agendada':'realizada';
+  setSt(p,s,nx);save();render();toast(nx==='realizada'?'✅ Presença registrada':nx==='faltou'?'❌ Falta registrada':'Voltou para agendado')}
+function cfgRow(pid,h){const p=pat(pid),rs=db.recorr.filter(r=>r.pid===pid&&r.hora===h);
+  openModal(`<h3>${esc(p.nome)}</h3><div class="muted" style="margin-bottom:12px">${h||'sem hora'}${rs.map(r=>' · ↻ '+r.dias.map(n=>DIAS[n]).join('·')).join('')}</div><div class="btns" style="flex-direction:column">
+  <button class="btn bp" onclick="closeModal();go('pac',{pid:'${pid}',tab:'evol'})">📝 Evolução / cobrança das sessões</button>
+  ${rs.map(r=>`<button class="btn bd2" onclick="rmRec('${r.id}')">Encerrar recorrência ${r.dias.map(n=>DIAS[n]).join('·')}</button>`).join('')}
+  <button class="btn bg" onclick="closeModal()">Fechar</button></div>`)}
 function evS(pid,sid){const s=pat(pid).sessoes.find(x=>x.id===sid);if(s.status==='agendada')registrar(pid,sid);else openSessao(pid,sid)}
 function evV(rid,d){const r=db.recorr.find(x=>x.id===rid),p=pat(r.pid);
   openModal(`<h3>${esc(p.nome)}</h3><div class="muted" style="margin-bottom:12px">↻ ${fmtD(d)} às ${esc(r.hora)}</div><div class="btns" style="flex-direction:column">
@@ -498,13 +523,13 @@ function matV(rid,d,a){const r=db.recorr.find(x=>x.id===rid),p=pat(r.pid);
 function rmRec(id){if(!confirm('Encerrar esta recorrência? Sessões já registradas são mantidas.'))return;db.recorr=db.recorr.filter(r=>r.id!==id);save();closeModal();render()}
 function registrar(pid,sid){const p=pat(pid),s=p.sessoes.find(x=>x.id===sid);s.status='realizada';openSessao(pid,sid);s.status='agendada'}
 function marcaFalta(pid,sid){const s=pat(pid).sessoes.find(x=>x.id===sid);s.status='faltou';save();render();toast('Falta registrada')}
-function agendarModal(d,h){
+function agendarModal(d,h,pid){
   const ps=db.patients.filter(p=>p.status!=='alta');if(!ps.length)return toast('Cadastre um paciente primeiro');
   const dow=new Date((d||iso())+'T12:00').getDay();
-  openModal(`<h3>Agendar</h3><div class="fg"><label>Paciente</label><select id="g_p">${ps.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('')}</select></div>
+  openModal(`<h3>Agendar</h3><div class="fg"><label>Paciente</label><select id="g_p">${ps.map(p=>`<option value="${p.id}" ${p.id===pid?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></div>
   <div class="fg"><label>Tipo</label><select id="g_t" onchange="$('g_i').style.display=this.value==='i'?'block':'none';$('g_r').style.display=this.value==='r'?'block':'none'"><option value="i">Individual (data única)</option><option value="r">Recorrente (dias da semana)</option></select></div>
   <div id="g_i">${field('g_d','Data',d||iso(),'date')}</div>
-  <div id="g_r" style="display:none"><label>Dias da semana</label><div class="fl">${[1,2,3,4,5,6].map(n=>`<label class="tab" style="margin:0;display:flex;gap:5px;align-items:center;text-transform:none;letter-spacing:0"><input type="checkbox" class="g_dia" value="${n}" ${n===dow?'checked':''}>${DIAS[n]}</label>`).join('')}</div>
+  <div id="g_r" style="display:none"><label>Dias da semana</label><div class="fl">${[1,2,3,4,5,6,0].map(n=>`<label class="tab" style="margin:0;display:flex;gap:5px;align-items:center;text-transform:none;letter-spacing:0"><input type="checkbox" class="g_dia" value="${n}" ${n===dow?'checked':''}>${DIAS[n]}</label>`).join('')}</div>
   <div class="row">${field('g_ini','A partir de',d||iso(),'date')}${field('g_fim','Até (opcional)','','date')}</div></div>
   ${field('g_h','Hora',h||'','time')}
   <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="salvarAgenda()">Agendar</button></div>`);
