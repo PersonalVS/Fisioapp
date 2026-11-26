@@ -77,6 +77,10 @@ input[type=checkbox]{width:auto}
 #toast{position:fixed;left:50%;bottom:calc(var(--sb) + 80px);transform:translateX(-50%);background:var(--card2);border:1px solid var(--bd);padding:9px 16px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .25s;z-index:99;white-space:nowrap}
 #toast.on{opacity:1}
 .empty{text-align:center;padding:40px 10px;color:var(--tx3)}.empty div{font-size:42px;margin-bottom:8px}
+.wk{width:100%;min-width:540px;border-collapse:collapse;table-layout:fixed}.wk th,.wk td{border:1px solid var(--bd);padding:2px;vertical-align:top;font-size:10.5px}.wk th{background:var(--card2);font-size:10px;color:var(--tx2);padding:5px 2px}.wk th.td{color:var(--ac)}.wk td.hr{width:38px;color:var(--tx3);text-align:center;font-weight:700;cursor:default}.wk td{height:36px;cursor:pointer}
+.ev{border-radius:5px;padding:2px 3px;margin-bottom:2px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:3px solid}.ev.rc{background:var(--acd);border-color:var(--ac);color:var(--ac)}.ev.ind{background:rgba(79,191,106,.16);border-color:var(--blue);color:var(--blue)}.ev.ok{background:var(--card2);border-color:var(--tx3);color:var(--tx3)}.ev.red{border-color:var(--red);color:var(--red)}.ev.mut{opacity:.4;border-color:var(--tx3)}
+.wn{display:flex;align-items:center;gap:8px;margin-bottom:10px}.wn b{flex:1;text-align:center;font-size:13px}
+#pv{position:fixed;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column;padding-top:var(--st)}#pv.on{display:flex}.pvb{display:flex;gap:6px;padding:10px 12px;background:var(--sf);border-bottom:1px solid var(--bd)}.pvb .btn{padding:9px 10px;font-size:12.5px}#pvf{flex:1;border:0;background:#fff;width:100%}
 @media(min-width:700px){#main{padding:20px calc(50% - 320px)}}
 </style>
 </head>
@@ -92,8 +96,9 @@ input[type=checkbox]{width:auto}
   </div>
 </div>
 <div id="ov" onclick="if(event.target===this)closeModal()"><div id="md"></div></div>
+<div id="pv"><div class="pvb"><button class="btn bg" onclick="fecharPront()">✕ Fechar</button><button class="btn bp" style="flex:1" onclick="zapPdf()">📄 Enviar PDF</button><button class="btn bo" onclick="zapTexto()">💬 Texto</button><button class="btn bg" onclick="imprimirPront()">🖨️</button></div><iframe id="pvf"></iframe></div>
 <div id="toast"></div>
-<datalist id="dl-adm"></datalist>
+<datalist id="dl-adm"></datalist><datalist id="dl-tipo"><option value="Ortopédica"><option value="Neurológica"><option value="Esportiva"><option value="Pilates"><option value="RPG"><option value="Domiciliar"><option value="Respiratória"><option value="Reavaliação"></datalist>
 <datalist id="dl-forca"></datalist>
 <datalist id="dl-testes"></datalist>
 <input type="file" id="bkfile" accept=".json" style="display:none" onchange="importar(event)"/>
@@ -102,7 +107,7 @@ input[type=checkbox]{width:auto}
 // ═══════════ DADOS (ficam só neste aparelho; faça backup em Ajustes) ═══════════
 const KEY='pfisio_db_v1';
 let db=load();
-function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.patients)return d}catch(e){}return{patients:[],settings:{nome:'',crefito:'',clinica:'',tel:''}}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.patients){d.recorr=d.recorr||[];return d}}catch(e){}return{patients:[],recorr:[],settings:{nome:'',crefito:'',clinica:'',tel:''}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('⚠️ Não foi possível salvar (armazenamento cheio?)')}}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -136,7 +141,7 @@ $('dl-forca').innerHTML=FORCA_P.map(a=>`<option value="${a}">`).join('');
 $('dl-testes').innerHTML=TESTES_P.map(a=>`<option value="${a}">`).join('');
 
 // ═══════════ NAVEGAÇÃO ═══════════
-const S={view:'home',pid:null,tab:'resumo',q:'',f:'todos',aid:null};
+const S={view:'home',pid:null,tab:'resumo',q:'',f:'todos',aid:null,ag:'sem',wk:0,mes:iso().slice(0,7)};
 let D=null; // rascunho da avaliação em edição
 function go(view,o={}){Object.assign(S,{view},o);render();$('main').scrollTop=0}
 function back(){if(S.view==='aval'){D=null;go('pac',{tab:'aval'})}else go('home')}
@@ -169,7 +174,7 @@ function listHtml(){
 function viewHome(){
   const t=iso();
   const ativos=db.patients.filter(p=>p.status!=='alta').length;
-  const hoje=db.patients.reduce((n,p)=>n+p.sessoes.filter(s=>s.data===t&&s.status==='agendada').length,0);
+  const hoje=ocorr(t).filter(x=>x.virt||x.s.status==='agendada').length;
   const dev=db.patients.reduce((n,p)=>n+devedor(p),0);
   return`<div class="stats"><div class="stat"><div class="sv" style="color:var(--ac)">${ativos}</div><div class="sl">Em tratamento</div></div>
   <div class="stat"><div class="sv" style="color:var(--blue)">${hoje}</div><div class="sl">Sessões hoje</div></div>
@@ -205,7 +210,7 @@ function salvarPac(pid){
   if(pid){Object.assign(pat(pid),d);save();closeModal();render();toast('✅ Cadastro atualizado')}
   else{const p={id:uid(),status:'ativo',criado:iso(),avaliacoes:[],sessoes:[],pacotes:[],plano:{metas:[],alta:null},...d};db.patients.push(p);save();closeModal();toast('✅ Paciente cadastrado');go('pac',{pid:p.id,tab:'aval'})}
 }
-function excluirPac(pid){const p=pat(pid);if(!confirm(`Excluir "${p.nome}" e todo o prontuário? Esta ação não pode ser desfeita.`))return;db.patients=db.patients.filter(x=>x.id!==pid);save();toast('🗑 Paciente excluído');go('home')}
+function excluirPac(pid){const p=pat(pid);if(!confirm(`Excluir "${p.nome}" e todo o prontuário? Esta ação não pode ser desfeita.`))return;db.patients=db.patients.filter(x=>x.id!==pid);db.recorr=db.recorr.filter(r=>r.pid!==pid);save();toast('🗑 Paciente excluído');go('home')}
 
 function viewPac(){
   const p=pat(S.pid);if(!p){S.view='home';return viewHome()}
@@ -321,7 +326,7 @@ function openSessao(pid,sid,agendar,quick){
   <div class="row">${field('s_data','Data',s?.data||iso(),'date')}${field('s_hora','Hora',s?.hora||'','time')}</div>
   <div class="fg"><label>Situação</label><select id="s_st" onchange="$('s_soap').style.display=this.value==='realizada'?'block':'none'">${opts([['agendada','Agendada'],['realizada','Realizada'],['faltou','Faltou'],['cancelada','Cancelada']],st)}</select></div>
   <div id="s_soap" style="display:${st==='realizada'?'block':'none'}">
-  ${area('s_S','S — Subjetivo',s?.S,3,'Relato do paciente: dor, queixas, evolução desde a última sessão')}
+  ${field('s_tipo','Tipo de atendimento',s?.tipo||ultimo?.tipo||'','text','list="dl-tipo" placeholder="Ex: Ortopédica, Pilates, RPG, Domiciliar"')}${area('s_S','S — Subjetivo',s?.S,3,'Relato do paciente: dor, queixas, evolução desde a última sessão')}
   ${area('s_O','O — Objetivo',s?.O,3,'Achados: ADM, força, edema, testes, observação clínica')}
   ${area('s_A','A — Avaliação',s?.A,2,'Análise e raciocínio clínico: resposta ao tratamento, progresso')}
   ${area('s_P','P — Plano / Conduta',s?.P,3,'Condutas realizadas hoje e plano para as próximas sessões')}
@@ -340,7 +345,7 @@ function salvarSessao(pid,sid){
   const p=pat(pid),old=sid?p.sessoes.find(x=>x.id===sid):null;
   if(!v('s_data'))return toast('⚠️ Informe a data');
   const status=v('s_st');
-  const r={id:old?.id||uid(),data:v('s_data'),hora:v('s_hora'),status,S:v('s_S'),O:v('s_O'),A:v('s_A'),P:v('s_P'),eva:v('s_eva')===''?null:+v('s_eva')};
+  const r={id:old?.id||uid(),data:v('s_data'),hora:v('s_hora'),status,S:v('s_S'),O:v('s_O'),A:v('s_A'),P:v('s_P'),eva:v('s_eva')===''?null:+v('s_eva'),tipo:v('s_tipo')};
   if(status==='realizada'){
     const c=v('s_cobr');
     if(c==='cortesia'){r.cortesia=true;r.valor=0;r.pago=true}
@@ -350,7 +355,7 @@ function salvarSessao(pid,sid){
   if(old)Object.assign(old,{pacoteId:undefined,cortesia:undefined,pagoEm:undefined,forma:undefined},r);else p.sessoes.push(r);
   save();closeModal();render();toast('✅ Sessão salva');
 }
-function excluirSessao(pid,sid){if(!confirm('Excluir esta sessão?'))return;const p=pat(pid);p.sessoes=p.sessoes.filter(s=>s.id!==sid);save();closeModal();render()}
+function excluirSessao(pid,sid){if(!confirm('Excluir esta sessão?'))return;const p=pat(pid);const x=p.sessoes.find(q=>q.id===sid);if(x&&x.rec){const r=db.recorr.find(q=>q.id===x.rec);if(r)(r.skip=r.skip||[]).push(x.data)}p.sessoes=p.sessoes.filter(s=>s.id!==sid);save();closeModal();render()}
 
 // ═══════════ PLANO DE TRATAMENTO, METAS E ALTA ═══════════
 const MS={andamento:['Em andamento','blue'],atingida:['Atingida','ok'],parcial:['Parcial','org'],naoatingida:['Não atingida','red']};
@@ -392,7 +397,7 @@ function salvarAlta(){const p=pat(S.pid);p.plano.alta={data:v('a_d'),motivo:v('a
 function reabrir(pid){const p=pat(pid);p.status='ativo';p.plano.alta=null;save();render();toast('Tratamento reaberto')}
 
 // ═══════════ FINANCEIRO ═══════════
-function recebimentos(p){const r=[];p.sessoes.forEach(s=>{if(s.status==='realizada'&&s.pago&&s.valor>0&&s.pagoEm)r.push({d:s.pagoEm,v:s.valor,f:s.forma,t:'Sessão '+fmtD(s.data),n:p.nome})});p.pacotes.forEach(k=>{if(k.pago&&k.pagoEm)r.push({d:k.pagoEm,v:k.valor,f:k.forma,t:'Pacote '+k.nome,n:p.nome})});return r}
+function recebimentos(p){const r=[];p.sessoes.forEach(s=>{if(s.status==='realizada'&&s.pago&&s.valor>0&&s.pagoEm)r.push({d:s.pagoEm,v:s.valor,f:s.forma,t:'Sessão '+fmtD(s.data),n:p.nome,pid:p.id,k:s.tipo||'Sem classificação'})});p.pacotes.forEach(k=>{if(k.pago&&k.pagoEm)r.push({d:k.pagoEm,v:k.valor,f:k.forma,t:'Pacote '+k.nome,n:p.nome,pid:p.id,k:'Pacotes'})});return r}
 function tabFin(p){
   const pend=p.sessoes.filter(s=>s.status==='realizada'&&!s.pago&&s.valor>0).sort((a,b)=>a.data<b.data?-1:1);
   const d=devedor(p);
@@ -415,22 +420,36 @@ function pagarModal(tipo,pid,id){openModal(`<h3>Registrar recebimento</h3>${fiel
   <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="confirmaPago('${tipo}','${pid}','${id}')">Confirmar</button></div>`)}
 function confirmaPago(tipo,pid,id){const p=pat(pid),o=tipo==='pacote'?p.pacotes.find(k=>k.id===id):p.sessoes.find(s=>s.id===id);o.pago=true;o.pagoEm=v('r_d')||iso();o.forma=v('r_f');save();closeModal();render();toast('✅ Recebimento registrado')}
 function desfazPago(tipo,pid,id){if(!confirm('Marcar como não pago?'))return;const p=pat(pid),o=tipo==='pacote'?p.pacotes.find(k=>k.id===id):p.sessoes.find(s=>s.id===id);o.pago=false;o.pagoEm=null;save();render()}
+const MESES=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const mesAdd=(m,n)=>iso(new Date(+m.slice(0,4),+m.slice(5)-1+n,1)).slice(0,7);
+const mesLb=m=>MESES[+m.slice(5)-1]+'/'+m.slice(2,4);
+const kfmt=n=>n>=1000?(n/1000).toFixed(1).replace('.',',')+'k':String(Math.round(n));
 function viewFin(){
-  const mes=iso().slice(0,7);
-  let rec=[];db.patients.forEach(p=>rec=rec.concat(recebimentos(p)));
-  rec=rec.filter(r=>r.d.startsWith(mes)).sort((a,b)=>a.d<b.d?1:-1);
-  const total=rec.reduce((n,r)=>n+r.v,0),dev=db.patients.map(p=>({p,d:devedor(p)})).filter(x=>x.d>0).sort((a,b)=>b.d-a.d);
-  const sessMes=db.patients.reduce((n,p)=>n+real(p).filter(s=>s.data.startsWith(mes)).length,0);
-  return`<div class="stats"><div class="stat"><div class="sv" style="color:var(--ac);font-size:16px;padding-top:2px">${brl(total)}</div><div class="sl">Recebido no mês</div></div>
-  <div class="stat"><div class="sv" style="color:var(--red);font-size:16px;padding-top:2px">${brl(dev.reduce((n,x)=>n+x.d,0))}</div><div class="sl">A receber</div></div>
+  const m=S.mes;let rec=[];db.patients.forEach(p=>rec=rec.concat(recebimentos(p)));
+  const sum=mm=>rec.filter(r=>r.d.startsWith(mm)).reduce((n,r)=>n+r.v,0);
+  const rm=rec.filter(r=>r.d.startsWith(m)).sort((a,b)=>a.d<b.d?1:-1);
+  const total=sum(m),ant=sum(mesAdd(m,-1)),dev=db.patients.map(p=>({p,d:devedor(p)})).filter(x=>x.d>0).sort((a,b)=>b.d-a.d);
+  const sessMes=db.patients.reduce((n,p)=>n+real(p).filter(s=>s.data.startsWith(m)).length,0);
+  const grp=f=>{const o={};rm.forEach(r=>{const k=f(r);o[k]=(o[k]||0)+r.v});return Object.entries(o).sort((a,b)=>b[1]-a[1])};
+  const share=l=>l.length?l.map(([k,x])=>{const pc=total?Math.round(x/total*100):0;return`<div class="ln"><span>${esc(k)}</span><b>${brl(x)} · ${pc}%</b></div><div class="bar" style="margin:-4px 0 6px"><i style="width:${pc}%"></i></div>`}).join(''):'<div class="muted">Sem recebimentos neste mês.</div>';
+  const pp=db.patients.map(p=>({p,r:rm.filter(x=>x.pid===p.id).reduce((n,x)=>n+x.v,0),n:real(p).filter(s=>s.data.startsWith(m)).length,a:devedor(p)})).filter(x=>x.r||x.n||x.a).sort((a,b)=>b.r-a.r);
+  const ms=[-5,-4,-3,-2,-1,0].map(i=>mesAdd(m,i)),vals=ms.map(sum),mx=Math.max(...vals,1);
+  const varp=ant?Math.round((total-ant)/ant*100):null;
+  return`<div class="wn"><button class="btn bg bs" onclick="S.mes=mesAdd(S.mes,-1);render()">‹</button><b>${MESES[+m.slice(5)-1]} de ${m.slice(0,4)}</b><button class="btn bg bs" onclick="S.mes=mesAdd(S.mes,1);render()">›</button></div>
+  <div class="stats"><div class="stat"><div class="sv" style="color:var(--ac);font-size:16px;padding-top:2px">${brl(total)}</div><div class="sl">Recebido${varp!==null?` · <span style="color:${varp>=0?'var(--blue)':'var(--red)'}">${varp>=0?'▲':'▼'}${Math.abs(varp)}%</span>`:''}</div></div>
+  <div class="stat"><div class="sv" style="color:var(--red);font-size:16px;padding-top:2px">${brl(dev.reduce((n,x)=>n+x.d,0))}</div><div class="sl">A receber (total)</div></div>
   <div class="stat"><div class="sv">${sessMes}</div><div class="sl">Sessões no mês</div></div></div>
+  <div class="card"><div class="ct">Recebido nos últimos 6 meses</div><div style="display:flex;align-items:flex-end;height:120px">${ms.map((x,i)=>`<div style="flex:1;text-align:center;font-size:10px;color:var(--tx2)">${vals[i]?kfmt(vals[i]):''}<div style="height:${Math.max(3,vals[i]/mx*80)}px;background:${x===m?'var(--ac)':'var(--bd)'};border-radius:5px 5px 0 0;margin:2px 5px 0"></div><div style="color:var(--tx3);margin-top:3px">${mesLb(x)}</div></div>`).join('')}</div></div>
+  <div class="card"><div class="ct">Por tipo de atendimento</div>${share(grp(r=>r.k))}<div class="muted">Pacotes entram juntos, na data do pagamento. Defina o tipo ao registrar cada sessão.</div></div>
+  <div class="card"><div class="ct">Por forma de pagamento</div>${share(grp(r=>r.f||'Não informada'))}</div>
+  <div class="card"><div class="ct">Por paciente</div>${pp.length?`<div style="overflow-x:auto"><table class="wk" style="min-width:0"><tr><th style="text-align:left">Paciente</th><th>Sess.</th><th>Recebido</th><th>Aberto</th></tr>${pp.map(x=>`<tr><td style="height:auto;padding:6px 4px;font-size:12px;color:var(--tx)" onclick="go('pac',{pid:'${x.p.id}',tab:'fin'})">${esc(x.p.nome)}</td><td style="height:auto;text-align:center">${x.n}</td><td style="height:auto;text-align:right;font-weight:700;color:var(--ac)">${brl(x.r)}</td><td style="height:auto;text-align:right;color:${x.a?'var(--red)':'var(--tx3)'}">${x.a?brl(x.a):'—'}</td></tr>`).join('')}</table></div>`:'<div class="muted">Sem movimentação neste mês.</div>'}</div>
   <div class="card"><div class="ct">Pacientes com valores em aberto</div>${dev.length?dev.map(({p,d})=>`<div class="ln" style="align-items:center"><span style="cursor:pointer;color:var(--tx)" onclick="go('pac',{pid:'${p.id}',tab:'fin'})">${esc(p.nome)}</span><b style="color:var(--red)">${brl(d)}</b>
   <button class="btn bs bo" onclick="wa('${esc(p.tel)}','Olá, ${esc(first(p.nome))}! Passando para combinar o pagamento em aberto das sessões de fisioterapia: ${brl(d)}. Obrigada! 😊')">💬</button></div>`).join(''):`<div class="muted">Tudo em dia. ✅</div>`}</div>
-  <div class="card"><div class="ct">Recebimentos do mês</div>${rec.length?rec.map(r=>`<div class="ln"><span>${fmtD(r.d)} · ${esc(r.n)}<br><small style="color:var(--tx3)">${esc(r.t)}${r.f?' · '+esc(r.f):''}</small></span><b>${brl(r.v)}</b></div>`).join(''):`<div class="muted">Nenhum recebimento neste mês ainda.</div>`}</div>`;
+  <div class="card"><div class="ct">Recebimentos do mês</div>${rm.length?rm.map(r=>`<div class="ln"><span>${fmtD(r.d)} · ${esc(r.n)}<br><small style="color:var(--tx3)">${esc(r.t)} · ${esc(r.k)}${r.f?' · '+esc(r.f):''}</small></span><b>${brl(r.v)}</b></div>`).join(''):`<div class="muted">Nenhum recebimento neste mês.</div>`}</div>`;
 }
 
 // ═══════════ AGENDA ═══════════
-function viewAgenda(){
+function viewLista(){
   const all=[];db.patients.forEach(p=>p.sessoes.forEach(s=>{if(s.status==='agendada')all.push({p,s})}));
   all.sort((a,b)=>(a.s.data+(a.s.hora||''))<(b.s.data+(b.s.hora||''))?-1:1);
   const t=iso(),g={'⏰ Pendentes de registro':all.filter(x=>x.s.data<t),'Hoje':all.filter(x=>x.s.data===t),'Próximas':all.filter(x=>x.s.data>t)};
@@ -439,15 +458,63 @@ function viewAgenda(){
   const body=Object.entries(g).filter(([,l])=>l.length).map(([k,l])=>`<div class="ct" style="margin-top:6px">${k}</div>${l.map(card).join('')}`).join('');
   return`<button class="btn bp bf" style="margin-bottom:14px" onclick="agendarModal()">📅 Agendar sessão</button>${body||`<div class="empty"><div>📅</div>Nenhuma sessão agendada.</div>`}`;
 }
+const DIAS=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+const segunda=o=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7)+o*7);return d};
+function ocorr(d){
+  const dow=new Date(d+'T12:00').getDay(),out=[],seen=new Set();
+  db.patients.forEach(p=>p.sessoes.forEach(s=>{if(s.data===d){out.push({p,s,h:s.hora||'',rec:!!s.rec});if(s.rec)seen.add(s.rec)}}));
+  db.recorr.forEach(r=>{const p=pat(r.pid);if(!p||p.status==='alta'||!r.dias.includes(dow)||d<r.ini||(r.fim&&d>r.fim)||(r.skip||[]).includes(d)||seen.has(r.id))return;out.push({p,r,h:r.hora,rec:true,virt:true})});
+  return out}
+function viewAgenda(){
+  const tb=`<div class="tabs">${[['sem','📆 Semana'],['lista','📋 Lista']].map(([k,l])=>`<span class="tab ${S.ag===k?'on':''}" onclick="S.ag='${k}';render()">${l}</span>`).join('')}</div>`;
+  return tb+(S.ag==='lista'?viewLista():viewSemana())}
+function viewSemana(){
+  const m=segunda(S.wk),t=iso(),dias=[0,1,2,3,4,5].map(i=>{const d=new Date(m);d.setDate(m.getDate()+i);return iso(d)}),it=dias.map(ocorr);
+  let h0=7,h1=19;it.flat().forEach(x=>{const h=parseInt(x.h);if(!isNaN(h)){h0=Math.min(h0,h);h1=Math.max(h1,h)}});
+  const sem=it.some(l=>l.some(x=>!x.h)),rows=[];if(sem)rows.push('');for(let h=h0;h<=h1;h++)rows.push(String(h).padStart(2,'0'));
+  const ev=x=>{
+    const nm=esc(first(x.p.nome)),hh=x.h&&x.h.slice(3)!=='00'?x.h.slice(3)+' ':'';
+    const st=x.s?x.s.status:'agendada',cls=st==='realizada'?'ok':st==='faltou'?'red':st==='cancelada'?'mut':x.rec?'rc':'ind';
+    const oc=x.virt?`evV('${x.r.id}','${x.d}')`:`evS('${x.p.id}','${x.s.id}')`;
+    return`<div class="ev ${cls}" onclick="event.stopPropagation();${oc}">${x.rec?'↻ ':''}${hh}${nm}</div>`};
+  const dn=r=>r.dias.map(n=>DIAS[n]).join('·')+' '+r.hora;
+  const cell=(i,hr)=>`<td onclick="agendarModal('${dias[i]}','${hr?hr+':00':''}')">${it[i].filter(x=>hr===''?!x.h:parseInt(x.h)===+hr).sort((a,b)=>a.h<b.h?-1:1).map(x=>ev({...x,d:dias[i]})).join('')}</td>`;
+  const a=dias[0],b=dias[5];
+  return`<div class="wn"><button class="btn bg bs" onclick="S.wk--;render()">‹</button><b>${a.slice(8)}/${a.slice(5,7)} – ${b.slice(8)}/${b.slice(5,7)}</b>${S.wk?`<button class="btn bo bs" onclick="S.wk=0;render()">Hoje</button>`:''}<button class="btn bg bs" onclick="S.wk++;render()">›</button></div>
+  <div style="overflow-x:auto;margin-bottom:10px"><table class="wk"><tr><th></th>${dias.map((d,i)=>`<th class="${d===t?'td':''}">${DIAS[i+1]}<br>${d.slice(8)}</th>`).join('')}</tr>
+  ${rows.map(h=>`<tr><td class="hr" style="cursor:default">${h===''?'s/ hora':h+'h'}</td>${dias.map((d,i)=>cell(i,h)).join('')}</tr>`).join('')}</table></div>
+  <div class="muted" style="margin-bottom:12px"><span class="chip ok">↻ recorrente</span> <span class="chip blue">individual</span> <span class="chip">realizada</span> <span class="chip red">faltou</span> · toque num horário vazio para agendar</div>
+  <button class="btn bp bf" style="margin-bottom:12px" onclick="agendarModal()">📅 Agendar (individual ou recorrente)</button>
+  <div class="card"><div class="ct">↻ Atendimentos recorrentes</div>${db.recorr.length?db.recorr.map(r=>{const p=pat(r.pid);return p?`<div class="ln" style="align-items:center"><span style="color:var(--tx)">${esc(p.nome)}<br><small style="color:var(--tx3)">${dn(r)}${r.fim?' · até '+fmtD(r.fim):''}</small></span><button class="x" onclick="rmRec('${r.id}')">✕</button></div>`:''}).join(''):'<div class="muted">Nenhum. Ex.: Sr. João — SEG·QUA·SEX às 08:00.</div>'}</div>`}
+function evS(pid,sid){const s=pat(pid).sessoes.find(x=>x.id===sid);if(s.status==='agendada')registrar(pid,sid);else openSessao(pid,sid)}
+function evV(rid,d){const r=db.recorr.find(x=>x.id===rid),p=pat(r.pid);
+  openModal(`<h3>${esc(p.nome)}</h3><div class="muted" style="margin-bottom:12px">↻ ${fmtD(d)} às ${esc(r.hora)}</div><div class="btns" style="flex-direction:column">
+  <button class="btn bp" onclick="matV('${rid}','${d}','reg')">📝 Registrar sessão</button><button class="btn bg" onclick="matV('${rid}','${d}','falta')">Faltou</button>
+  <button class="btn bg" onclick="matV('${rid}','${d}','skip')">Desmarcar só este dia</button><button class="btn bd2" onclick="rmRec('${rid}')">Encerrar recorrência</button><button class="btn bg" onclick="closeModal()">Fechar</button></div>`)}
+function matV(rid,d,a){const r=db.recorr.find(x=>x.id===rid),p=pat(r.pid);
+  if(a==='skip'){(r.skip=r.skip||[]).push(d);save();closeModal();return render()}
+  const s={id:uid(),data:d,hora:r.hora,status:a==='falta'?'faltou':'agendada',valor:0,pago:true,rec:rid};p.sessoes.push(s);save();
+  if(a==='reg')registrar(p.id,s.id);else{closeModal();render();toast('Falta registrada')}}
+function rmRec(id){if(!confirm('Encerrar esta recorrência? Sessões já registradas são mantidas.'))return;db.recorr=db.recorr.filter(r=>r.id!==id);save();closeModal();render()}
 function registrar(pid,sid){const p=pat(pid),s=p.sessoes.find(x=>x.id===sid);s.status='realizada';openSessao(pid,sid);s.status='agendada'}
 function marcaFalta(pid,sid){const s=pat(pid).sessoes.find(x=>x.id===sid);s.status='faltou';save();render();toast('Falta registrada')}
-function agendarModal(){
+function agendarModal(d,h){
   const ps=db.patients.filter(p=>p.status!=='alta');if(!ps.length)return toast('Cadastre um paciente primeiro');
-  openModal(`<h3>Agendar sessão</h3><div class="fg"><label>Paciente</label><select id="g_p">${ps.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('')}</select></div>
-  <div class="row">${field('g_d','Data',iso(),'date')}${field('g_h','Hora','','time')}</div>
+  const dow=new Date((d||iso())+'T12:00').getDay();
+  openModal(`<h3>Agendar</h3><div class="fg"><label>Paciente</label><select id="g_p">${ps.map(p=>`<option value="${p.id}">${esc(p.nome)}</option>`).join('')}</select></div>
+  <div class="fg"><label>Tipo</label><select id="g_t" onchange="$('g_i').style.display=this.value==='i'?'block':'none';$('g_r').style.display=this.value==='r'?'block':'none'"><option value="i">Individual (data única)</option><option value="r">Recorrente (dias da semana)</option></select></div>
+  <div id="g_i">${field('g_d','Data',d||iso(),'date')}</div>
+  <div id="g_r" style="display:none"><label>Dias da semana</label><div class="fl">${[1,2,3,4,5,6].map(n=>`<label class="tab" style="margin:0;display:flex;gap:5px;align-items:center;text-transform:none;letter-spacing:0"><input type="checkbox" class="g_dia" value="${n}" ${n===dow?'checked':''}>${DIAS[n]}</label>`).join('')}</div>
+  <div class="row">${field('g_ini','A partir de',d||iso(),'date')}${field('g_fim','Até (opcional)','','date')}</div></div>
+  ${field('g_h','Hora',h||'','time')}
   <div class="btns"><button class="btn bg" onclick="closeModal()">Cancelar</button><button class="btn bp" style="flex:2" onclick="salvarAgenda()">Agendar</button></div>`);
 }
-function salvarAgenda(){if(!v('g_d'))return toast('⚠️ Informe a data');pat(v('g_p')).sessoes.push({id:uid(),data:v('g_d'),hora:v('g_h'),status:'agendada',valor:0,pago:true});save();closeModal();render();toast('✅ Sessão agendada')}
+function salvarAgenda(){
+  const pid=v('g_p'),h=v('g_h');
+  if(v('g_t')==='r'){const dias=[...document.querySelectorAll('.g_dia:checked')].map(x=>+x.value);if(!dias.length)return toast('⚠️ Marque os dias');if(!h)return toast('⚠️ Informe a hora');
+    db.recorr.push({id:uid(),pid,dias,hora:h,ini:v('g_ini')||iso(),fim:v('g_fim'),skip:[]});save();closeModal();render();return toast('✅ Recorrência criada')}
+  if(!v('g_d'))return toast('⚠️ Informe a data');
+  pat(pid).sessoes.push({id:uid(),data:v('g_d'),hora:h,status:'agendada',valor:0,pago:true});save();closeModal();render();toast('✅ Sessão agendada')}
 
 // ═══════════ AJUSTES / BACKUP / PRONTUÁRIO PDF ═══════════
 function viewCfg(){
@@ -460,7 +527,7 @@ function viewCfg(){
 }
 function salvarCfg(){db.settings={nome:v('t_nome'),crefito:v('t_cr'),tel:v('t_tel'),clinica:v('t_cl')};save();toast('✅ Salvo')}
 function exportar(){const b=new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fisioapp-backup-'+iso()+'.json';document.body.appendChild(a);a.click();a.remove();toast('⬇️ Backup baixado')}
-async function importar(e){const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d.patients)throw 0;if(!confirm('Restaurar substitui TODOS os dados atuais pelos do arquivo. Continuar?'))return;db=d;save();toast('✅ Backup restaurado');go('home')}catch(x){toast('❌ Arquivo inválido')}}
+async function importar(e){const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d.patients)throw 0;if(!confirm('Restaurar substitui TODOS os dados atuais pelos do arquivo. Continuar?'))return;db=d;db.recorr=db.recorr||[];save();toast('✅ Backup restaurado');go('home')}catch(x){toast('❌ Arquivo inválido')}}
 function imprimir(pid){
   const p=pat(pid),s=db.settings,pl=p.plano;
   const sec=(t,b)=>b?`<h2>${t}</h2>${b}`:'';
@@ -473,7 +540,7 @@ function imprimir(pid){
   const metas=pl.metas.map(g=>`<li>${esc(g.texto)} — <i>${MS[g.status][0]}</i></li>`).join('');
   const al=pl.alta;
   const h=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Prontuário — ${esc(p.nome)}</title><style>body{font-family:Arial,sans-serif;color:#111;max-width:800px;margin:0 auto;padding:24px;font-size:13px;line-height:1.5}h1{font-size:20px;margin-bottom:2px}h2{font-size:14px;border-bottom:2px solid #8a6a0a;color:#8a6a0a;margin:22px 0 8px;padding-bottom:3px;text-transform:uppercase}h3{font-size:13px;margin:12px 0 4px}table{width:100%;border-collapse:collapse;margin:6px 0}th,td{border:1px solid #ccc;padding:4px 7px;text-align:left;font-size:12px}th{background:#f6f0d6}p{margin:3px 0}.s{border-left:3px solid #8a6a0a;padding-left:10px;margin:10px 0;page-break-inside:avoid}.hd{display:flex;justify-content:space-between;border-bottom:1px solid #999;padding-bottom:8px}.bt{margin-bottom:14px}@media print{.bt{display:none}}</style></head><body>
-  <button class="bt" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+  
   <div class="hd"><div><h1>${esc(s.clinica||'Prontuário de Fisioterapia')}</h1><div>${esc(s.nome)}${s.crefito?' · CREFITO '+esc(s.crefito):''}${s.tel?' · '+esc(s.tel):''}</div></div><div style="text-align:right">Emitido em ${fmtD(iso())}</div></div>
   <h2>Identificação</h2><p><b>${esc(p.nome)}</b> ${idade(p.nasc)?'· '+idade(p.nasc):''} ${p.sexo?'· '+esc(p.sexo):''}</p>${kv('Profissão',p.prof)}${kv('Telefone',p.tel)}${kv('Diagnóstico médico',p.dxMedico)}${kv('Encaminhador',p.medico)}${kv('Alertas',p.alerta)}
   ${sec('Anamnese',kv('Queixa principal',p.queixa)+kv('HDA',p.hda)+kv('Antecedentes',p.ant)+kv('Medicamentos',p.meds))}
@@ -482,7 +549,30 @@ function imprimir(pid){
   ${sec('Evolução por sessão (SOAP)',sess)}
   ${al?sec('Alta',kv('Data',fmtD(al.data))+kv('Motivo',al.motivo)+kv('Resumo',al.resumo)+kv('Orientações',al.orient)):''}
   <p style="margin-top:50px;text-align:center">_______________________________<br>${esc(s.nome)}${s.crefito?' — CREFITO '+esc(s.crefito):''}</p></body></html>`;
-  const w=window.open('','_blank');if(!w)return toast('⚠️ Permita pop-ups para gerar o PDF');w.document.write(h);w.document.close();
+  abrirPront(pid,h);
+}
+let PV=null;
+function abrirPront(pid,h){PV={pid};$('pvf').srcdoc=h;$('pv').classList.add('on')}
+function fecharPront(){$('pv').classList.remove('on');$('pvf').srcdoc='';PV=null}
+function imprimirPront(){try{$('pvf').contentWindow.focus();$('pvf').contentWindow.print()}catch(e){toast('Use "Enviar PDF" para salvar')}}
+function textoPront(p){
+  const s=db.settings,pl=p.plano,L=['*Prontuário — '+p.nome+'*'];
+  if(s.nome)L.push(s.nome+(s.crefito?' · CREFITO '+s.crefito:''));
+  [['Diagnóstico',p.dxMedico],['Queixa',p.queixa],['HDA',p.hda],['Dx fisioterapêutico',pl.dx],['Objetivo',pl.obj],['Condutas',pl.cond]].forEach(([k,x])=>x&&L.push('*'+k+':* '+x));
+  const ev=evaPts(p);if(ev.length)L.push('*EVA:* '+ev.map(e=>e.v).join(' → '));
+  L.push('*Sessões realizadas:* '+real(p).length);
+  real(p).sort((a,b)=>a.data<b.data?-1:1).slice(-3).forEach(x=>L.push('\n*'+fmtD(x.data)+'*'+['S','O','A','P'].filter(k=>x[k]).map(k=>'\n'+k+': '+x[k]).join('')));
+  return L.join('\n')}
+function zapTexto(){if(PV)wa('',textoPront(pat(PV.pid)))}
+async function zapPdf(){
+  if(!PV)return;const p=pat(PV.pid);
+  try{toast('⏳ Gerando PDF…');
+    if(!window.html2pdf)await new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+    const blob=await html2pdf().set({margin:8,html2canvas:{scale:2},jsPDF:{format:'a4'}}).from($('pvf').contentDocument.body).outputPdf('blob');
+    const nome='Prontuario-'+p.nome.trim().replace(/\s+/g,'_')+'.pdf',file=new File([blob],nome,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:nome});
+    else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=nome;document.body.appendChild(a);a.click();a.remove();toast('⬇️ PDF baixado — anexe no WhatsApp')}
+  }catch(e){if(e&&e.name==='AbortError')return;toast('⚠️ Não foi possível gerar o PDF — enviando texto');zapTexto()}
 }
 render();
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
